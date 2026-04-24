@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUIVI.STUDIO · Tableau de bord</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --grad: linear-gradient(160deg,#3ECFEA 0%,#2EC98A 45%,#E5C23A 100%);
+      --dk:   #0E1A12;
+      --dk55: rgba(14,26,18,.55);
+      --dk38: rgba(14,26,18,.38);
+      --dk12: rgba(14,26,18,.10);
+      --dk08: rgba(14,26,18,.06);
+      --white: #EDE8DE;
+      --pill-bg: rgba(14,26,18,.86);
+      --card: rgba(255,255,255,.22);
+      --card-border: rgba(255,255,255,.35);
+    }
+    body { font-family:'DM Mono',monospace; min-height:100vh; background:var(--grad); color:var(--dk); -webkit-font-smoothing:antialiased; }
+    nav { display:flex; justify-content:space-between; align-items:center; padding:1.4rem 2rem; border-bottom:1px solid var(--dk12); }
+    .nav-brand { font-size:11px; font-weight:500; letter-spacing:.18em; text-transform:uppercase; }
+    .nav-tag { font-size:9px; letter-spacing:.1em; color:var(--dk55); }
+    .container { max-width:960px; margin:0 auto; padding:2.5rem 2rem 4rem; }
+
+    /* SEARCH */
+    .search-wrap { display:flex; gap:.75rem; margin-bottom:2rem; align-items:center; }
+    .search-input {
+      flex:1; background:rgba(255,255,255,.2); border:1px solid rgba(14,26,18,.15);
+      border-radius:8px; padding:.7rem 1rem; font-family:'DM Mono',monospace;
+      font-size:.85rem; color:var(--dk); outline:none; transition:border-color .2s;
+    }
+    .search-input:focus { border-color:var(--dk55); }
+    .btn-load {
+      background:var(--pill-bg); color:var(--white); font-family:'DM Mono',monospace;
+      font-size:.78rem; font-weight:500; letter-spacing:.06em; padding:12px 22px;
+      border-radius:100px; border:none; cursor:pointer; white-space:nowrap;
+      transition:background .2s;
+    }
+    .btn-load:hover { background:rgba(14,26,18,.96); }
+
+    /* EMPTY / LOADING */
+    .state-msg { text-align:center; padding:4rem 2rem; font-size:.82rem; color:var(--dk55); font-style:italic; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
+    .loading { animation:pulse 1.5s ease-in-out infinite; }
+
+    /* HEADER */
+    .dash-header { margin-bottom:2rem; }
+    .student-title { font-size:1.8rem; font-weight:500; letter-spacing:-.025em; }
+    .student-sub { font-size:.75rem; color:var(--dk55); font-style:italic; margin-top:.3rem; }
+
+    /* METRICS */
+    .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:.75rem; margin-bottom:1.5rem; }
+    .metric {
+      background:var(--card); border:1px solid var(--card-border);
+      border-radius:8px; padding:1rem 1.1rem;
+    }
+    .metric-label { font-size:.62rem; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--dk55); margin-bottom:.4rem; }
+    .metric-val { font-size:1.6rem; font-weight:500; letter-spacing:-.02em; }
+    .metric-sub { font-size:.65rem; color:var(--dk38); margin-top:.2rem; }
+
+    /* GRID */
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-bottom:.75rem; }
+    .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:.75rem; margin-bottom:.75rem; }
+    .full { margin-bottom:.75rem; }
+
+    /* CARDS */
+    .card {
+      background:var(--card); border:1px solid var(--card-border);
+      border-radius:8px; padding:1.2rem 1.3rem;
+    }
+    .card-title { font-size:.62rem; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--dk55); margin-bottom:1rem; }
+
+    /* CHART containers */
+    .chart-wrap { position:relative; height:180px; }
+    .chart-wrap-tall { position:relative; height:220px; }
+
+    /* QUIZ HISTORY */
+    .history-row {
+      display:flex; align-items:center; gap:.75rem;
+      padding:.65rem 0; border-bottom:1px solid var(--dk12); font-size:.78rem;
+    }
+    .history-row:last-child { border-bottom:none; }
+    .history-date { color:var(--dk55); width:80px; flex-shrink:0; font-size:.68rem; }
+    .history-subject { flex:1; font-weight:500; }
+    .history-score { font-weight:500; flex-shrink:0; }
+    .score-good { color:#1a6e3c; }
+    .score-mid  { color:#8a5a00; }
+    .score-low  { color:#8B1A10; }
+
+    /* BAR ROWS */
+    .bar-row { display:flex; align-items:center; gap:.6rem; margin-bottom:.55rem; }
+    .bar-label { font-size:.68rem; color:var(--dk55); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .bar-track { width:120px; height:6px; background:var(--dk08); border-radius:3px; overflow:hidden; flex-shrink:0; }
+    .bar-fill { height:100%; border-radius:3px; }
+    .bar-val { font-size:.68rem; font-weight:500; width:28px; text-align:right; flex-shrink:0; }
+
+    /* WORD CLOUD */
+    .word-cloud { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+    .word-tag {
+      font-size:.72rem; font-weight:500; padding:3px 10px; border-radius:20px;
+      cursor:default; transition:opacity .2s;
+    }
+
+    /* TREND BADGE */
+    .trend-up   { color:#1a6e3c; }
+    .trend-down { color:#8B1A10; }
+    .trend-flat { color:var(--dk55); }
+
+    /* EXPORT */
+    .btn-export {
+      font-family:'DM Mono',monospace; font-size:.68rem; font-weight:500;
+      letter-spacing:.1em; text-transform:uppercase; padding:6px 14px;
+      border-radius:100px; border:1px solid var(--dk12); background:rgba(255,255,255,.2);
+      color:var(--dk55); cursor:pointer; transition:all .2s;
+    }
+    .btn-export:hover { background:rgba(255,255,255,.4); color:var(--dk); }
+
+    .divider { height:1px; background:var(--dk12); margin:1.5rem 0; }
+    footer { text-align:center; padding:1.5rem; font-size:.68rem; color:var(--dk38); letter-spacing:.06em; border-top:1px solid var(--dk12); }
+
+    #dashboard { display:none; }
+  </style>
+</head>
+<body>
+<nav>
+  <span class="nav-brand">SUIVI.STUDIO</span>
+  <span class="nav-tag">Tableau de bord</span>
+</nav>
+
+<div class="container">
+
+  <div class="search-wrap">
+    <input class="search-input" id="nameInput" type="text" placeholder="Prénom de l'élève…" oninput="onNameInput()" onkeydown="if(event.key==='Enter')loadDashboard()">
+    <button class="btn-load" onclick="loadDashboard()">Charger →</button>
+  </div>
+
+  <div class="state-msg" id="stateMsg">Entre un prénom pour charger le tableau de bord.</div>
+
+  <div id="dashboard">
+    <div class="dash-header">
+      <div class="student-title" id="studentTitle">—</div>
+      <div class="student-sub" id="studentSub">—</div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">Quiz complétés</div>
+        <div class="metric-val" id="mTotal">—</div>
+        <div class="metric-sub" id="mTotalSub"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Score moyen</div>
+        <div class="metric-val" id="mAvg">—</div>
+        <div class="metric-sub" id="mTrend"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Meilleur quiz</div>
+        <div class="metric-val" id="mBest">—</div>
+        <div class="metric-sub" id="mBestSub"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">À renforcer</div>
+        <div class="metric-val" id="mWeak" style="font-size:.9rem;padding-top:.2rem">—</div>
+        <div class="metric-sub" id="mWeakSub"></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Progression · scores dans le temps</div>
+        <div class="chart-wrap"><canvas id="chartProgress"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Distribution des scores</div>
+        <div class="chart-wrap"><canvas id="chartDist"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Taux de réussite par sujet</div>
+        <div id="subjectBars"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Questions les plus ratées</div>
+        <div id="weakQuestions"></div>
+      </div>
+    </div>
+
+    <div class="full card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <span class="card-title" style="margin-bottom:0">Notions à retravailler</span>
+      </div>
+      <div class="word-cloud" id="wordCloud"></div>
+    </div>
+
+    <div class="full card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <span class="card-title" style="margin-bottom:0">Historique des quiz</span>
+        <button class="btn-export" onclick="exportCSV()">Exporter CSV</button>
+      </div>
+      <div id="historyList"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>SUIVI.STUDIO · Ton suivi, ta stratégie ! · Quiz generator</footer>
+
+<script>
+// ── CONFIG — replace with your Supabase credentials ──────────
+const SUPABASE_URL = 'https://ycoqsxxegwfazweebbax.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_0XZ1nZ9q3QYYF2crAMWiDw_bO0MVOt-';
+// ─────────────────────────────────────────────────────────────
+
+let allResults = [];
+let chartProgress = null;
+let chartDist = null;
+
+window.onNameInput = function() {
+  const v = document.getElementById('nameInput').value.trim();
+  if (!v) {
+    document.getElementById('dashboard').style.display = 'none';
+    setMsg('Entre un prénom pour charger le tableau de bord.');
+  }
+};
+
+window.loadDashboard = async function() {
+  const name = document.getElementById('nameInput').value.trim();
+  if (!name) return;
+  setMsg('Chargement…', true);
+  document.getElementById('dashboard').style.display = 'none';
+
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/quiz_results?student_name=ilike.${encodeURIComponent(name)}&order=quiz_date.asc`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    if (!res.ok) throw new Error('Erreur réseau');
+    allResults = await res.json();
+
+    if (!allResults.length) {
+      setMsg(`Aucun résultat trouvé pour "${name}".`);
+      return;
+    }
+
+    setMsg('');
+    renderDashboard(allResults, name);
+    document.getElementById('dashboard').style.display = 'block';
+  } catch(e) {
+    setMsg('Erreur de connexion. Vérifie tes identifiants Supabase.');
+  }
+};
+
+function renderDashboard(results, name) {
+  // Header
+  const subjects = [...new Set(results.map(r => r.subject))];
+  document.getElementById('studentTitle').textContent = name;
+  document.getElementById('studentSub').textContent =
+    subjects.join(', ') + ' · ' + results.length + ' quiz · trimestre en cours';
+
+  // Scores
+  const scores = results.map(r => Math.round((r.score / r.total) * 100));
+  const avg = Math.round(scores.reduce((a,b)=>a+b,0) / scores.length);
+  const best = Math.max(...scores);
+  const bestResult = results[scores.indexOf(best)];
+
+  document.getElementById('mTotal').textContent = results.length;
+  document.getElementById('mTotalSub').textContent = subjects.length + ' sujet' + (subjects.length>1?'s':'');
+  document.getElementById('mAvg').textContent = avg + '%';
+
+  // Trend: compare last 3 vs first 3
+  if (scores.length >= 4) {
+    const first = scores.slice(0,Math.floor(scores.length/2));
+    const last  = scores.slice(Math.floor(scores.length/2));
+    const firstAvg = Math.round(first.reduce((a,b)=>a+b,0)/first.length);
+    const lastAvg  = Math.round(last.reduce((a,b)=>a+b,0)/last.length);
+    const diff = lastAvg - firstAvg;
+    document.getElementById('mTrend').textContent = (diff>=0?'+':'')+diff+'% vs début de trimestre';
+  } else {
+    document.getElementById('mTrend').textContent = 'Pas encore assez de données';
+  }
+
+  document.getElementById('mBest').textContent = best + '%';
+  document.getElementById('mBestSub').textContent = bestResult.subject;
+
+  // Weakest concept
+  const allAnswers = results.flatMap(r => r.answers || []);
+  const wrong = allAnswers.filter(a => !a.is_correct);
+  // Extract first few words of wrong questions as "concept"
+  const concepts = {};
+  wrong.forEach(a => {
+    const key = a.question_fr ? a.question_fr.split(' ').slice(0,4).join(' ')+'…' : 'Inconnu';
+    concepts[key] = (concepts[key]||0) + 1;
+  });
+  const sorted = Object.entries(concepts).sort((a,b)=>b[1]-a[1]);
+  if (sorted.length) {
+    document.getElementById('mWeak').textContent = sorted[0][0];
+    document.getElementById('mWeakSub').textContent = 'raté ' + sorted[0][1] + ' fois';
+  }
+
+  // Charts
+  renderProgressChart(results, scores);
+  renderDistChart(scores);
+  renderSubjectBars(results);
+  renderWeakQuestions(allAnswers);
+  renderWordCloud(sorted);
+  renderHistory(results, scores);
+}
+
+function renderProgressChart(results, scores) {
+  const labels = results.map(r => {
+    const d = new Date(r.quiz_date);
+    return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+  });
+  if (chartProgress) chartProgress.destroy();
+  chartProgress = new Chart(document.getElementById('chartProgress'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: scores,
+        borderColor: '#0E1A12',
+        backgroundColor: 'rgba(14,26,18,.07)',
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: scores.map(s => s>=70?'#1D9E75':s>=50?'#EF9F27':'#D85A30'),
+        tension: .3,
+        fill: true
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx => ctx.parsed.y+'%' } } },
+      scales:{
+        y:{ min:0, max:100, ticks:{ callback: v=>v+'%', font:{family:'DM Mono',size:10} }, grid:{color:'rgba(14,26,18,.06)'} },
+        x:{ ticks:{ font:{family:'DM Mono',size:10} }, grid:{display:false} }
+      }
+    }
+  });
+}
+
+function renderDistChart(scores) {
+  const buckets = [0,0,0,0,0];
+  scores.forEach(s => {
+    if      (s < 40) buckets[0]++;
+    else if (s < 55) buckets[1]++;
+    else if (s < 70) buckets[2]++;
+    else if (s < 85) buckets[3]++;
+    else             buckets[4]++;
+  });
+  if (chartDist) chartDist.destroy();
+  chartDist = new Chart(document.getElementById('chartDist'), {
+    type: 'bar',
+    data: {
+      labels: ['< 40%','40–55%','55–70%','70–85%','85%+'],
+      datasets:[{ data:buckets, backgroundColor:['#F09595','#FAC775','#FAC775','#97C459','#5DCAA5'], borderRadius:4 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{
+        y:{ ticks:{stepSize:1,font:{family:'DM Mono',size:10}}, grid:{color:'rgba(14,26,18,.06)'} },
+        x:{ ticks:{font:{family:'DM Mono',size:10}}, grid:{display:false} }
+      }
+    }
+  });
+}
+
+function renderSubjectBars(results) {
+  const bySubject = {};
+  results.forEach(r => {
+    if (!bySubject[r.subject]) bySubject[r.subject] = [];
+    bySubject[r.subject].push(Math.round((r.score/r.total)*100));
+  });
+  const el = document.getElementById('subjectBars');
+  el.innerHTML = '';
+  Object.entries(bySubject).forEach(([subj, arr]) => {
+    const avg = Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);
+    const color = avg>=70?'#1D9E75':avg>=50?'#EF9F27':'#D85A30';
+    el.innerHTML += `<div class="bar-row">
+      <span class="bar-label">${subj}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${avg}%;background:${color}"></div></div>
+      <span class="bar-val" style="color:${color}">${avg}%</span>
+    </div>`;
+  });
+}
+
+function renderWeakQuestions(allAnswers) {
+  const byQ = {};
+  allAnswers.forEach(a => {
+    const key = a.question_fr || 'Inconnu';
+    if (!byQ[key]) byQ[key] = {total:0, wrong:0};
+    byQ[key].total++;
+    if (!a.is_correct) byQ[key].wrong++;
+  });
+  const sorted = Object.entries(byQ)
+    .map(([q,v]) => ({q, pct:Math.round((v.wrong/v.total)*100), total:v.total}))
+    .filter(x => x.pct > 0)
+    .sort((a,b) => b.pct - a.pct)
+    .slice(0, 7);
+
+  const el = document.getElementById('weakQuestions');
+  el.innerHTML = '';
+  sorted.forEach(item => {
+    const short = item.q.length > 45 ? item.q.slice(0,45)+'…' : item.q;
+    const color = item.pct>=70?'#D85A30':item.pct>=40?'#EF9F27':'#1D9E75';
+    el.innerHTML += `<div class="bar-row">
+      <span class="bar-label" title="${item.q}">${short}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${item.pct}%;background:${color}"></div></div>
+      <span class="bar-val" style="color:${color}">${item.pct}%</span>
+    </div>`;
+  });
+  if (!sorted.length) el.innerHTML = '<p style="font-size:.72rem;color:var(--dk55);font-style:italic">Aucune erreur enregistrée.</p>';
+}
+
+function renderWordCloud(sorted) {
+  const colors = [
+    {bg:'#FCEBEB',c:'#A32D2D'},{bg:'#FAEEDA',c:'#854F0B'},
+    {bg:'#E6F1FB',c:'#185FA5'},{bg:'#EAF3DE',c:'#3B6D11'},
+    {bg:'#EEEDFE',c:'#534AB7'}
+  ];
+  const el = document.getElementById('wordCloud');
+  el.innerHTML = '';
+  if (!sorted.length) { el.innerHTML = '<p style="font-size:.72rem;color:var(--dk55);font-style:italic">Pas encore de données suffisantes.</p>'; return; }
+  const max = sorted[0][1];
+  sorted.slice(0,14).forEach(([word, count], i) => {
+    const size = Math.round(10 + (count/max)*8);
+    const col = colors[i % colors.length];
+    el.innerHTML += `<span class="word-tag" style="font-size:${size}px;background:${col.bg};color:${col.c}">${word}</span>`;
+  });
+}
+
+function renderHistory(results, scores) {
+  const el = document.getElementById('historyList');
+  el.innerHTML = '';
+  [...results].reverse().forEach((r, i) => {
+    const s = scores[scores.length - 1 - i];
+    const cls = s>=70?'score-good':s>=50?'score-mid':'score-low';
+    const d = new Date(r.quiz_date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+    el.innerHTML += `<div class="history-row">
+      <span class="history-date">${d}</span>
+      <span class="history-subject">${r.subject}</span>
+      <span class="history-score ${cls}">${r.score}/${r.total} · ${s}%</span>
+    </div>`;
+  });
+}
+
+window.exportCSV = function() {
+  const name = document.getElementById('nameInput').value.trim();
+  const rows = [['Date','Élève','Sujet','Score','Total','Pourcentage']];
+  allResults.forEach(r => {
+    const d = new Date(r.quiz_date).toLocaleDateString('fr-FR');
+    const pct = Math.round((r.score/r.total)*100);
+    rows.push([d, r.student_name, r.subject, r.score, r.total, pct+'%']);
+  });
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `suivi_${name}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+};
+
+function setMsg(msg, loading=false) {
+  const el = document.getElementById('stateMsg');
+  el.textContent = msg;
+  el.className = 'state-msg' + (loading?' loading':'');
+  el.style.display = msg ? 'block' : 'none';
+}
+</script>
+</body>
+</html>
