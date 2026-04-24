@@ -387,48 +387,93 @@ function renderDistChart(scores) {
   if (chartDist) chartDist.destroy();
   const b=[0,0,0,0,0];
   scores.forEach(s=>{ if(s<40)b[0]++;else if(s<55)b[1]++;else if(s<70)b[2]++;else if(s<85)b[3]++;else b[4]++; });
+  const total = scores.length || 1;
+  const pcts  = b.map(v => Math.round((v/total)*100));
   chartDist = new Chart(document.getElementById('chartDist'), {
     type:'bar',
-    data:{ labels:['< 40%','40–55%','55–70%','70–85%','85%+'], datasets:[{data:b,backgroundColor:['#F09595','#FAC775','#FAC775','#97C459','#5DCAA5'],borderRadius:4}] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ticks:{stepSize:1,font:{family:'DM Mono',size:10}},grid:{color:'rgba(14,26,18,.06)'}}, x:{ticks:{font:{family:'DM Mono',size:10}},grid:{display:false}} } }
+    data:{ labels:['< 40%','40–55%','55–70%','70–85%','85%+'], datasets:[{data:pcts,backgroundColor:['#F09595','#FAC775','#FAC775','#97C459','#5DCAA5'],borderRadius:4}] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx => ctx.parsed.y+'% des quiz' } } },
+      scales:{
+        y:{ min:0, max:100, ticks:{ callback:v=>v+'%', font:{family:'DM Mono',size:10} }, grid:{color:'rgba(14,26,18,.06)'}},
+        x:{ ticks:{font:{family:'DM Mono',size:10}}, grid:{display:false} }
+      }
+    }
   });
 }
 
 function renderWeakQuestions(rows) {
   const all = rows.flatMap(r => r.answers||[]);
-  const byQ = {};
+  // Group by concept
+  const byConcept = {};
   all.forEach(a => {
-    const k = a.question_fr||'?';
-    if (!byQ[k]) byQ[k]={total:0,wrong:0};
-    byQ[k].total++;
-    if (!a.is_correct) byQ[k].wrong++;
+    const k = a.concept || extractConcept(a.question_fr||'?');
+    if (!byConcept[k]) byConcept[k]={total:0,wrong:0,questions:[]};
+    byConcept[k].total++;
+    if (!a.is_correct) {
+      byConcept[k].wrong++;
+      byConcept[k].questions.push(a);
+    }
   });
-  const sorted = Object.entries(byQ).map(([q,v])=>({q,pct:Math.round((v.wrong/v.total)*100)}))
-    .filter(x=>x.pct>0).sort((a,b)=>b.pct-a.pct).slice(0,6);
+  const sorted = Object.entries(byConcept)
+    .map(([c,v])=>({c, pct:Math.round((v.wrong/v.total)*100), questions:v.questions, total:v.total}))
+    .filter(x=>x.pct>0).sort((a,b)=>b.pct-a.pct).slice(0,7);
+
   const el = document.getElementById('weakQuestions');
   el.innerHTML = '';
   if (!sorted.length) { el.innerHTML='<p style="font-size:.72rem;color:var(--dk55);font-style:italic">Aucune erreur enregistrée.</p>'; return; }
-  sorted.forEach(item => {
-    const short = item.q.length>42?item.q.slice(0,42)+'…':item.q;
-    const c = item.pct>=70?'#D85A30':item.pct>=40?'#EF9F27':'#1D9E75';
-    el.innerHTML+=`<div class="bar-row"><span class="bar-label" title="${item.q}">${short}</span><div class="bar-track"><div class="bar-fill" style="width:${item.pct}%;background:${c}"></div></div><span class="bar-val" style="color:${c}">${item.pct}%</span></div>`;
+
+  sorted.forEach((item,i) => {
+    const col = item.pct>=70?'#D85A30':item.pct>=40?'#EF9F27':'#1D9E75';
+    const id  = 'concept-detail-'+i;
+    el.innerHTML+=`
+      <div style="margin-bottom:.5rem">
+        <div class="bar-row" style="cursor:pointer" onclick="toggleConcept('${id}')">
+          <span class="bar-label" style="font-weight:500">${item.c}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${item.pct}%;background:${col}"></div></div>
+          <span class="bar-val" style="color:${col}">${item.pct}%</span>
+          <span style="font-size:.6rem;color:var(--dk38);margin-left:4px">▾</span>
+        </div>
+        <div id="${id}" style="display:none;margin-left:.5rem;padding:.5rem .75rem;background:rgba(255,255,255,.15);border-radius:6px;margin-top:2px">
+          ${item.questions.slice(0,3).map(q=>`
+            <div style="font-size:.68rem;border-bottom:1px solid var(--dk12);padding:.4rem 0;line-height:1.5">
+              <div style="font-weight:500;margin-bottom:.2rem">${q.question_fr||''}</div>
+              <div style="color:#D85A30">✗ ${q.chosen_answer_fr||q.chosen_answer||'—'}</div>
+              <div style="color:#1a6e3c">✓ ${q.correct_answer_fr||q.correct_answer||'—'}</div>
+              ${q.explanation_fr?`<div style="color:var(--dk55);margin-top:.2rem;font-style:italic">${q.explanation_fr}</div>`:''}
+            </div>`).join('')}
+        </div>
+      </div>`;
   });
+}
+
+window.toggleConcept = function(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display==='none' ? 'block' : 'none';
+};
+
+function extractConcept(q) {
+  // fallback: use first 4 words as concept label
+  return q.split(' ').slice(0,4).join(' ')+'…';
 }
 
 function renderWordCloud(rows) {
   const all = rows.flatMap(r=>r.answers||[]).filter(a=>!a.is_correct);
   const concepts = {};
-  all.forEach(a=>{ const k=(a.question_fr||'').split(' ').slice(0,5).join(' ')+'…'; concepts[k]=(concepts[k]||0)+1; });
+  all.forEach(a=>{
+    const k = a.concept || extractConcept(a.question_fr||'?');
+    concepts[k]=(concepts[k]||0)+1;
+  });
   const sorted = Object.entries(concepts).sort((a,b)=>b[1]-a[1]);
   const colors=[{bg:'#FCEBEB',c:'#A32D2D'},{bg:'#FAEEDA',c:'#854F0B'},{bg:'#E6F1FB',c:'#185FA5'},{bg:'#EAF3DE',c:'#3B6D11'},{bg:'#EEEDFE',c:'#534AB7'}];
   const el = document.getElementById('wordCloud');
   el.innerHTML='';
   if (!sorted.length) { el.innerHTML='<p style="font-size:.72rem;color:var(--dk55);font-style:italic">Pas encore assez de données.</p>'; return; }
   const max=sorted[0][1];
-  sorted.slice(0,12).forEach(([w,n],i)=>{
-    const sz=Math.round(10+(n/max)*8);
+  sorted.slice(0,14).forEach(([w,n],i)=>{
+    const sz=Math.round(10+(n/max)*9);
     const col=colors[i%colors.length];
-    el.innerHTML+=`<span class="word-tag" style="font-size:${sz}px;background:${col.bg};color:${col.c}">${w}</span>`;
+    el.innerHTML+=`<span class="word-tag" style="font-size:${sz}px;background:${col.bg};color:${col.c};cursor:default" title="${n} erreur(s)">${w}</span>`;
   });
 }
 
