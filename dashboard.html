@@ -11,119 +11,102 @@
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     :root {
       --grad: linear-gradient(160deg,#3ECFEA 0%,#2EC98A 45%,#E5C23A 100%);
-      --dk:   #0E1A12;
-      --dk55: rgba(14,26,18,.55);
-      --dk38: rgba(14,26,18,.38);
-      --dk12: rgba(14,26,18,.10);
-      --dk08: rgba(14,26,18,.06);
-      --white: #EDE8DE;
-      --pill-bg: rgba(14,26,18,.86);
-      --card: rgba(255,255,255,.22);
-      --card-border: rgba(255,255,255,.35);
+      --dk:#0E1A12; --dk55:rgba(14,26,18,.55); --dk38:rgba(14,26,18,.38);
+      --dk12:rgba(14,26,18,.10); --dk08:rgba(14,26,18,.06);
+      --white:#EDE8DE; --pill-bg:rgba(14,26,18,.86);
+      --card:rgba(255,255,255,.22); --card-border:rgba(255,255,255,.35);
     }
     body { font-family:'DM Mono',monospace; min-height:100vh; background:var(--grad); color:var(--dk); -webkit-font-smoothing:antialiased; }
     nav { display:flex; justify-content:space-between; align-items:center; padding:1.4rem 2rem; border-bottom:1px solid var(--dk12); }
     .nav-brand { font-size:11px; font-weight:500; letter-spacing:.18em; text-transform:uppercase; }
-    .nav-tag { font-size:9px; letter-spacing:.1em; color:var(--dk55); }
+    .nav-tag   { font-size:9px; letter-spacing:.1em; color:var(--dk55); }
     .container { max-width:960px; margin:0 auto; padding:2.5rem 2rem 4rem; }
 
     /* SEARCH */
-    .search-wrap { display:flex; gap:.75rem; margin-bottom:2rem; align-items:center; }
-    .search-input {
-      flex:1; background:rgba(255,255,255,.2); border:1px solid rgba(14,26,18,.15);
-      border-radius:8px; padding:.7rem 1rem; font-family:'DM Mono',monospace;
-      font-size:.85rem; color:var(--dk); outline:none; transition:border-color .2s;
-    }
+    .search-wrap { display:flex; gap:.75rem; margin-bottom:2rem; }
+    .search-input { flex:1; background:rgba(255,255,255,.2); border:1px solid rgba(14,26,18,.15); border-radius:8px; padding:.7rem 1rem; font-family:'DM Mono',monospace; font-size:.85rem; color:var(--dk); outline:none; transition:border-color .2s; }
     .search-input:focus { border-color:var(--dk55); }
-    .btn-load {
-      background:var(--pill-bg); color:var(--white); font-family:'DM Mono',monospace;
-      font-size:.78rem; font-weight:500; letter-spacing:.06em; padding:12px 22px;
-      border-radius:100px; border:none; cursor:pointer; white-space:nowrap;
-      transition:background .2s;
-    }
+    .btn-load { background:var(--pill-bg); color:var(--white); font-family:'DM Mono',monospace; font-size:.78rem; font-weight:500; letter-spacing:.06em; padding:12px 22px; border-radius:100px; border:none; cursor:pointer; white-space:nowrap; transition:background .2s; }
     .btn-load:hover { background:rgba(14,26,18,.96); }
 
-    /* EMPTY / LOADING */
+    /* STATE */
     .state-msg { text-align:center; padding:4rem 2rem; font-size:.82rem; color:var(--dk55); font-style:italic; }
     @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
     .loading { animation:pulse 1.5s ease-in-out infinite; }
 
-    /* HEADER */
-    .dash-header { margin-bottom:2rem; }
-    .student-title { font-size:1.8rem; font-weight:500; letter-spacing:-.025em; }
-    .student-sub { font-size:.75rem; color:var(--dk55); font-style:italic; margin-top:.3rem; }
+    /* BREADCRUMB */
+    .breadcrumb { display:flex; align-items:center; gap:.5rem; margin-bottom:1.5rem; font-size:.7rem; color:var(--dk55); flex-wrap:wrap; }
+    .crumb { cursor:pointer; letter-spacing:.06em; }
+    .crumb:hover { color:var(--dk); }
+    .crumb.active { color:var(--dk); font-weight:500; cursor:default; }
+    .crumb-sep { opacity:.4; }
+
+    /* STUDENT HEADER */
+    .dash-header { margin-bottom:1.5rem; }
+    .student-title { font-size:1.6rem; font-weight:500; letter-spacing:-.025em; }
+    .student-sub   { font-size:.72rem; color:var(--dk55); font-style:italic; margin-top:.25rem; }
 
     /* METRICS */
-    .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:.75rem; margin-bottom:1.5rem; }
-    .metric {
-      background:var(--card); border:1px solid var(--card-border);
-      border-radius:8px; padding:1rem 1.1rem;
-    }
-    .metric-label { font-size:.62rem; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--dk55); margin-bottom:.4rem; }
-    .metric-val { font-size:1.6rem; font-weight:500; letter-spacing:-.02em; }
-    .metric-sub { font-size:.65rem; color:var(--dk38); margin-top:.2rem; }
+    .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:.75rem; margin-bottom:1.25rem; }
+    .metric { background:var(--card); border:1px solid var(--card-border); border-radius:8px; padding:.9rem 1rem; }
+    .metric-label { font-size:.58rem; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--dk55); margin-bottom:.35rem; }
+    .metric-val   { font-size:1.5rem; font-weight:500; letter-spacing:-.02em; line-height:1; }
+    .metric-sub   { font-size:.62rem; color:var(--dk38); margin-top:.25rem; }
 
     /* GRID */
     .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-bottom:.75rem; }
-    .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:.75rem; margin-bottom:.75rem; }
-    .full { margin-bottom:.75rem; }
+    .full  { margin-bottom:.75rem; }
+    .card  { background:var(--card); border:1px solid var(--card-border); border-radius:8px; padding:1.2rem 1.3rem; }
+    .card-title { font-size:.58rem; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--dk55); margin-bottom:.9rem; }
+    .chart-wrap { position:relative; height:170px; }
 
-    /* CARDS */
-    .card {
-      background:var(--card); border:1px solid var(--card-border);
-      border-radius:8px; padding:1.2rem 1.3rem;
-    }
-    .card-title { font-size:.62rem; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--dk55); margin-bottom:1rem; }
-
-    /* CHART containers */
-    .chart-wrap { position:relative; height:180px; }
-    .chart-wrap-tall { position:relative; height:220px; }
-
-    /* QUIZ HISTORY */
-    .history-row {
-      display:flex; align-items:center; gap:.75rem;
-      padding:.65rem 0; border-bottom:1px solid var(--dk12); font-size:.78rem;
-    }
-    .history-row:last-child { border-bottom:none; }
-    .history-date { color:var(--dk55); width:80px; flex-shrink:0; font-size:.68rem; }
-    .history-subject { flex:1; font-weight:500; }
-    .history-score { font-weight:500; flex-shrink:0; }
+    /* MATIERE CARDS */
+    .matiere-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:.75rem; margin-bottom:1rem; }
+    .matiere-card { background:var(--card); border:1px solid var(--card-border); border-radius:8px; padding:1.1rem 1.2rem; cursor:pointer; transition:all .2s; }
+    .matiere-card:hover { background:rgba(255,255,255,.38); border-color:var(--dk38); transform:translateY(-1px); }
+    .matiere-name  { font-size:1rem; font-weight:500; margin-bottom:.4rem; }
+    .matiere-stats { font-size:.68rem; color:var(--dk55); line-height:1.8; }
+    .matiere-score { font-size:1.4rem; font-weight:500; margin-top:.5rem; }
     .score-good { color:#1a6e3c; }
     .score-mid  { color:#8a5a00; }
     .score-low  { color:#8B1A10; }
 
+    /* SUJET LIST */
+    .sujet-row { display:flex; align-items:center; gap:.75rem; padding:.75rem 0; border-bottom:1px solid var(--dk12); cursor:pointer; transition:opacity .15s; }
+    .sujet-row:last-child { border-bottom:none; }
+    .sujet-row:hover { opacity:.75; }
+    .sujet-name  { flex:1; font-size:.85rem; font-weight:500; }
+    .sujet-meta  { font-size:.68rem; color:var(--dk55); }
+    .sujet-score { font-size:.85rem; font-weight:500; flex-shrink:0; }
+    .sujet-arrow { font-size:.7rem; color:var(--dk38); flex-shrink:0; }
+
     /* BAR ROWS */
-    .bar-row { display:flex; align-items:center; gap:.6rem; margin-bottom:.55rem; }
+    .bar-row { display:flex; align-items:center; gap:.6rem; margin-bottom:.5rem; }
     .bar-label { font-size:.68rem; color:var(--dk55); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .bar-track { width:120px; height:6px; background:var(--dk08); border-radius:3px; overflow:hidden; flex-shrink:0; }
-    .bar-fill { height:100%; border-radius:3px; }
-    .bar-val { font-size:.68rem; font-weight:500; width:28px; text-align:right; flex-shrink:0; }
+    .bar-track { width:100px; height:6px; background:var(--dk08); border-radius:3px; overflow:hidden; flex-shrink:0; }
+    .bar-fill  { height:100%; border-radius:3px; }
+    .bar-val   { font-size:.68rem; font-weight:500; width:32px; text-align:right; flex-shrink:0; }
+
+    /* HISTORY */
+    .history-row { display:flex; align-items:center; gap:.75rem; padding:.6rem 0; border-bottom:1px solid var(--dk12); font-size:.75rem; }
+    .history-row:last-child { border-bottom:none; }
+    .history-date    { color:var(--dk55); width:90px; flex-shrink:0; font-size:.65rem; }
+    .history-subject { flex:1; font-weight:500; }
+    .history-score   { font-weight:500; flex-shrink:0; }
 
     /* WORD CLOUD */
     .word-cloud { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
-    .word-tag {
-      font-size:.72rem; font-weight:500; padding:3px 10px; border-radius:20px;
-      cursor:default; transition:opacity .2s;
-    }
+    .word-tag { font-size:.72rem; font-weight:500; padding:3px 10px; border-radius:20px; cursor:default; }
 
-    /* TREND BADGE */
-    .trend-up   { color:#1a6e3c; }
-    .trend-down { color:#8B1A10; }
-    .trend-flat { color:var(--dk55); }
+    /* BUTTONS */
+    .btn-action { font-family:'DM Mono',monospace; font-size:.68rem; font-weight:500; letter-spacing:.1em; text-transform:uppercase; padding:6px 14px; border-radius:100px; border:1px solid var(--dk12); background:rgba(255,255,255,.2); color:var(--dk55); cursor:pointer; transition:all .2s; }
+    .btn-action:hover { background:rgba(255,255,255,.4); color:var(--dk); border-color:var(--dk38); }
 
-    /* EXPORT */
-    .btn-export {
-      font-family:'DM Mono',monospace; font-size:.68rem; font-weight:500;
-      letter-spacing:.1em; text-transform:uppercase; padding:6px 14px;
-      border-radius:100px; border:1px solid var(--dk12); background:rgba(255,255,255,.2);
-      color:var(--dk55); cursor:pointer; transition:all .2s;
-    }
-    .btn-export:hover { background:rgba(255,255,255,.4); color:var(--dk); }
-
-    .divider { height:1px; background:var(--dk12); margin:1.5rem 0; }
+    .divider { height:1px; background:var(--dk12); margin:1rem 0; }
     footer { text-align:center; padding:1.5rem; font-size:.68rem; color:var(--dk38); letter-spacing:.06em; border-top:1px solid var(--dk12); }
 
-    #dashboard { display:none; }
+    .view { display:none; }
+    .view.active { display:block; }
   </style>
 </head>
 <body>
@@ -133,43 +116,55 @@
 </nav>
 
 <div class="container">
-
   <div class="search-wrap">
-    <input class="search-input" id="nameInput" type="text" placeholder="Prénom de l'élève…" oninput="onNameInput()" onkeydown="if(event.key==='Enter')loadDashboard()">
+    <input class="search-input" id="nameInput" type="text" placeholder="Prénom de l'élève…" onkeydown="if(event.key==='Enter')loadDashboard()">
     <button class="btn-load" onclick="loadDashboard()">Charger →</button>
   </div>
 
   <div class="state-msg" id="stateMsg">Entre un prénom pour charger le tableau de bord.</div>
 
-  <div id="dashboard">
+  <!-- BREADCRUMB -->
+  <div class="breadcrumb" id="breadcrumb" style="display:none">
+    <span class="crumb" id="crumbStudent" onclick="goTo('matieres')"></span>
+    <span class="crumb-sep" id="crumbSep1" style="display:none">›</span>
+    <span class="crumb" id="crumbMatiere" onclick="goTo('sujets')" style="display:none"></span>
+    <span class="crumb-sep" id="crumbSep2" style="display:none">›</span>
+    <span class="crumb active" id="crumbSujet" style="display:none"></span>
+  </div>
+
+  <!-- VIEW: MATIERES -->
+  <div class="view" id="viewMatieres">
     <div class="dash-header">
-      <div class="student-title" id="studentTitle">—</div>
-      <div class="student-sub" id="studentSub">—</div>
+      <div class="student-title" id="mStudentTitle"></div>
+      <div class="student-sub" id="mStudentSub"></div>
     </div>
-
-    <div class="metrics">
-      <div class="metric">
-        <div class="metric-label">Quiz complétés</div>
-        <div class="metric-val" id="mTotal">—</div>
-        <div class="metric-sub" id="mTotalSub"></div>
-      </div>
-      <div class="metric">
-        <div class="metric-label">Score moyen</div>
-        <div class="metric-val" id="mAvg">—</div>
-        <div class="metric-sub" id="mTrend"></div>
-      </div>
-      <div class="metric">
-        <div class="metric-label">Meilleur quiz</div>
-        <div class="metric-val" id="mBest">—</div>
-        <div class="metric-sub" id="mBestSub"></div>
-      </div>
-      <div class="metric">
-        <div class="metric-label">À renforcer</div>
-        <div class="metric-val" id="mWeak" style="font-size:.9rem;padding-top:.2rem">—</div>
-        <div class="metric-sub" id="mWeakSub"></div>
-      </div>
+    <div class="metrics" id="mMetrics"></div>
+    <div class="card full">
+      <div class="card-title">Matières</div>
+      <div class="matiere-grid" id="matiereGrid"></div>
     </div>
+  </div>
 
+  <!-- VIEW: SUJETS -->
+  <div class="view" id="viewSujets">
+    <div class="dash-header">
+      <div class="student-title" id="sTitle"></div>
+      <div class="student-sub" id="sSub"></div>
+    </div>
+    <div class="metrics" id="sMetrics"></div>
+    <div class="card full">
+      <div class="card-title">Sujets</div>
+      <div id="sujetList"></div>
+    </div>
+  </div>
+
+  <!-- VIEW: DETAIL -->
+  <div class="view" id="viewDetail">
+    <div class="dash-header">
+      <div class="student-title" id="dTitle"></div>
+      <div class="student-sub" id="dSub"></div>
+    </div>
+    <div class="metrics" id="dMetrics"></div>
     <div class="grid2">
       <div class="card">
         <div class="card-title">Progression · scores dans le temps</div>
@@ -180,297 +175,316 @@
         <div class="chart-wrap"><canvas id="chartDist"></canvas></div>
       </div>
     </div>
-
     <div class="grid2">
-      <div class="card">
-        <div class="card-title">Taux de réussite par sujet</div>
-        <div id="subjectBars"></div>
-      </div>
       <div class="card">
         <div class="card-title">Questions les plus ratées</div>
         <div id="weakQuestions"></div>
       </div>
-    </div>
-
-    <div class="full card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-        <span class="card-title" style="margin-bottom:0">Notions à retravailler</span>
+      <div class="card">
+        <div class="card-title">Notions à retravailler</div>
+        <div class="word-cloud" id="wordCloud"></div>
       </div>
-      <div class="word-cloud" id="wordCloud"></div>
     </div>
-
-    <div class="full card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-        <span class="card-title" style="margin-bottom:0">Historique des quiz</span>
-        <button class="btn-export" onclick="exportCSV()">Exporter CSV</button>
+    <div class="card full">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem">
+        <span class="card-title" style="margin-bottom:0">Historique</span>
+        <button class="btn-action" onclick="exportCSV()">Exporter CSV</button>
       </div>
       <div id="historyList"></div>
     </div>
   </div>
-
 </div>
 
 <footer>SUIVI.STUDIO · Ton suivi, ta stratégie ! · Quiz generator</footer>
 
 <script>
-// ── CONFIG — replace with your Supabase credentials ──────────
 const SUPABASE_URL = 'https://ycoqsxxegwfazweebbax.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljb3FzeHhlZ3dmYXp3ZWViYmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5ODc2NzksImV4cCI6MjA5MjU2MzY3OX0.DdPAsZcWWZMdWgQesP6G0GooK_ejnsTPp05_lwRMi-8';
-// ─────────────────────────────────────────────────────────────
 
 let allResults = [];
-let chartProgress = null;
-let chartDist = null;
+let currentStudent = '';
+let currentMatiere = '';
+let currentSujet   = '';
+let chartProgress  = null;
+let chartDist      = null;
 
-window.onNameInput = function() {
-  const v = document.getElementById('nameInput').value.trim();
-  if (!v) {
-    document.getElementById('dashboard').style.display = 'none';
-    setMsg('Entre un prénom pour charger le tableau de bord.');
-  }
-};
-
+// ── LOAD ─────────────────────────────────────────────────────
 window.loadDashboard = async function() {
   const name = document.getElementById('nameInput').value.trim();
   if (!name) return;
+  currentStudent = name;
   setMsg('Chargement…', true);
-  document.getElementById('dashboard').style.display = 'none';
+  hideAll();
 
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/quiz_results?student_name=ilike.${encodeURIComponent(name)}&order=quiz_date.asc`,
-      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      { headers:{ 'apikey':SUPABASE_KEY, 'Authorization':'Bearer '+SUPABASE_KEY } }
     );
-    if (!res.ok) throw new Error('Erreur réseau');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     allResults = await res.json();
-
-    if (!allResults.length) {
-      setMsg(`Aucun résultat trouvé pour "${name}".`);
-      return;
-    }
-
+    if (!allResults.length) { setMsg(`Aucun résultat trouvé pour "${name}".`); return; }
     setMsg('');
-    renderDashboard(allResults, name);
-    document.getElementById('dashboard').style.display = 'block';
-  } catch(e) {
-    setMsg('Erreur de connexion. Vérifie tes identifiants Supabase.');
-  }
+    goTo('matieres');
+  } catch(e) { setMsg('Erreur : ' + e.message); }
 };
 
-function renderDashboard(results, name) {
-  // Header
-  const subjects = [...new Set(results.map(r => r.subject))];
-  document.getElementById('studentTitle').textContent = name;
-  document.getElementById('studentSub').textContent =
-    subjects.join(', ') + ' · ' + results.length + ' quiz · trimestre en cours';
+// ── NAVIGATION ────────────────────────────────────────────────
+window.goTo = function(view, matiere, sujet) {
+  if (matiere !== undefined) currentMatiere = matiere;
+  if (sujet   !== undefined) currentSujet   = sujet;
+  hideAll();
+  updateBreadcrumb(view);
+  if (view === 'matieres') renderMatieres();
+  if (view === 'sujets')   renderSujets();
+  if (view === 'detail')   renderDetail();
+};
 
-  // Scores
-  const scores = results.map(r => Math.round((r.score / r.total) * 100));
-  const avg = Math.round(scores.reduce((a,b)=>a+b,0) / scores.length);
-  const best = Math.max(...scores);
-  const bestResult = results[scores.indexOf(best)];
-
-  document.getElementById('mTotal').textContent = results.length;
-  document.getElementById('mTotalSub').textContent = subjects.length + ' sujet' + (subjects.length>1?'s':'');
-  document.getElementById('mAvg').textContent = avg + '%';
-
-  // Trend: compare last 3 vs first 3
-  if (scores.length >= 4) {
-    const first = scores.slice(0,Math.floor(scores.length/2));
-    const last  = scores.slice(Math.floor(scores.length/2));
-    const firstAvg = Math.round(first.reduce((a,b)=>a+b,0)/first.length);
-    const lastAvg  = Math.round(last.reduce((a,b)=>a+b,0)/last.length);
-    const diff = lastAvg - firstAvg;
-    document.getElementById('mTrend').textContent = (diff>=0?'+':'')+diff+'% vs début de trimestre';
-  } else {
-    document.getElementById('mTrend').textContent = 'Pas encore assez de données';
-  }
-
-  document.getElementById('mBest').textContent = best + '%';
-  document.getElementById('mBestSub').textContent = bestResult.subject;
-
-  // Weakest concept
-  const allAnswers = results.flatMap(r => r.answers || []);
-  const wrong = allAnswers.filter(a => !a.is_correct);
-  // Extract first few words of wrong questions as "concept"
-  const concepts = {};
-  wrong.forEach(a => {
-    const key = a.question_fr ? a.question_fr.split(' ').slice(0,4).join(' ')+'…' : 'Inconnu';
-    concepts[key] = (concepts[key]||0) + 1;
-  });
-  const sorted = Object.entries(concepts).sort((a,b)=>b[1]-a[1]);
-  if (sorted.length) {
-    document.getElementById('mWeak').textContent = sorted[0][0];
-    document.getElementById('mWeakSub').textContent = 'raté ' + sorted[0][1] + ' fois';
-  }
-
-  // Charts
-  renderProgressChart(results, scores);
-  renderDistChart(scores);
-  renderSubjectBars(results);
-  renderWeakQuestions(allAnswers);
-  renderWordCloud(sorted);
-  renderHistory(results, scores);
+function hideAll() {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
 }
 
-function renderProgressChart(results, scores) {
-  const labels = results.map(r => {
-    const d = new Date(r.quiz_date);
-    return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+function updateBreadcrumb(view) {
+  const bc = document.getElementById('breadcrumb');
+  bc.style.display = 'flex';
+  document.getElementById('crumbStudent').textContent = currentStudent;
+  const sep1 = document.getElementById('crumbSep1');
+  const cm   = document.getElementById('crumbMatiere');
+  const sep2 = document.getElementById('crumbSep2');
+  const cs   = document.getElementById('crumbSujet');
+
+  if (view === 'matieres') {
+    sep1.style.display='none'; cm.style.display='none';
+    sep2.style.display='none'; cs.style.display='none';
+    document.getElementById('crumbStudent').className='crumb active';
+  } else if (view === 'sujets') {
+    sep1.style.display=''; cm.style.display='';
+    cm.textContent = currentMatiere || 'Toutes matières';
+    sep2.style.display='none'; cs.style.display='none';
+    document.getElementById('crumbStudent').className='crumb';
+    cm.className='crumb active';
+  } else if (view === 'detail') {
+    sep1.style.display=''; cm.style.display='';
+    cm.textContent = currentMatiere || 'Toutes matières';
+    sep2.style.display=''; cs.style.display='';
+    cs.textContent = currentSujet;
+    document.getElementById('crumbStudent').className='crumb';
+    cm.className='crumb';
+    cs.className='crumb active';
+  }
+}
+
+// ── VIEW: MATIERES ────────────────────────────────────────────
+function renderMatieres() {
+  document.getElementById('viewMatieres').classList.add('active');
+  const scores = allResults.map(r => pct(r));
+  const avg    = mean(scores);
+  const matieres = groupBy(allResults, r => r.matiere || 'Non spécifié');
+
+  document.getElementById('mStudentTitle').textContent = currentStudent;
+  document.getElementById('mStudentSub').textContent =
+    Object.keys(matieres).length + ' matière(s) · ' + allResults.length + ' quiz complétés';
+
+  // Global metrics
+  document.getElementById('mMetrics').innerHTML = metricCards([
+    { label:'Quiz complétés', val:allResults.length, sub: Object.keys(matieres).length + ' matière(s)' },
+    { label:'Score global moyen', val:avg+'%', sub: trendLabel(scores) },
+    { label:'Meilleure matière', val: bestMatiere(matieres).name, sub: bestMatiere(matieres).avg+'%' },
+    { label:'À renforcer', val: worstMatiere(matieres).name, sub: worstMatiere(matieres).avg+'%' },
+  ]);
+
+  // Matière cards
+  const grid = document.getElementById('matiereGrid');
+  grid.innerHTML = '';
+  Object.entries(matieres).forEach(([mat, rows]) => {
+    const s = rows.map(r => pct(r));
+    const a = mean(s);
+    const cls = a>=70?'score-good':a>=50?'score-mid':'score-low';
+    const sujets = [...new Set(rows.map(r => r.subject).filter(Boolean))];
+    grid.innerHTML += `<div class="matiere-card" onclick="goTo('sujets','${esc(mat)}')">
+      <div class="matiere-name">${mat}</div>
+      <div class="matiere-stats">${rows.length} quiz · ${sujets.length} sujet(s)</div>
+      <div class="matiere-score ${cls}">${a}%</div>
+    </div>`;
   });
+}
+
+// ── VIEW: SUJETS ──────────────────────────────────────────────
+function renderSujets() {
+  document.getElementById('viewSujets').classList.add('active');
+  const rows = allResults.filter(r => (r.matiere||'Non spécifié') === currentMatiere);
+  const scores = rows.map(r => pct(r));
+  const avg = mean(scores);
+  const sujets = groupBy(rows, r => r.subject || 'Non spécifié');
+
+  document.getElementById('sTitle').textContent = currentMatiere;
+  document.getElementById('sSub').textContent =
+    currentStudent + ' · ' + rows.length + ' quiz · ' + Object.keys(sujets).length + ' sujet(s)';
+
+  document.getElementById('sMetrics').innerHTML = metricCards([
+    { label:'Quiz complétés', val:rows.length, sub: Object.keys(sujets).length + ' sujet(s)' },
+    { label:'Score moyen', val:avg+'%', sub: trendLabel(scores) },
+    { label:'Meilleur score', val:Math.max(...scores)+'%', sub: '' },
+    { label:'Dernier quiz', val:pct(rows[rows.length-1])+'%', sub: fmtDate(rows[rows.length-1].quiz_date) },
+  ]);
+
+  const list = document.getElementById('sujetList');
+  list.innerHTML = '';
+  Object.entries(sujets).forEach(([subj, sr]) => {
+    const s  = sr.map(r => pct(r));
+    const a  = mean(s);
+    const cls = a>=70?'score-good':a>=50?'score-mid':'score-low';
+    list.innerHTML += `<div class="sujet-row" onclick="goTo('detail','${esc(currentMatiere)}','${esc(subj)}')">
+      <div class="sujet-name">${subj}</div>
+      <div class="sujet-meta">${sr.length} quiz</div>
+      <div class="sujet-score ${cls}">${a}%</div>
+      <div class="sujet-arrow">›</div>
+    </div>`;
+  });
+}
+
+// ── VIEW: DETAIL ──────────────────────────────────────────────
+function renderDetail() {
+  document.getElementById('viewDetail').classList.add('active');
+  const rows = allResults.filter(r =>
+    (r.matiere||'Non spécifié') === currentMatiere &&
+    (r.subject||'Non spécifié') === currentSujet
+  );
+  const scores = rows.map(r => pct(r));
+  const avg    = mean(scores);
+
+  document.getElementById('dTitle').textContent = currentSujet;
+  document.getElementById('dSub').textContent =
+    currentStudent + ' · ' + currentMatiere + ' · ' + rows.length + ' quiz';
+
+  document.getElementById('dMetrics').innerHTML = metricCards([
+    { label:'Quiz complétés', val:rows.length, sub:'' },
+    { label:'Score moyen', val:avg+'%', sub: trendLabel(scores) },
+    { label:'Meilleur score', val:Math.max(...scores)+'%', sub:'' },
+    { label:'Dernier score', val:scores[scores.length-1]+'%', sub: fmtDate(rows[rows.length-1].quiz_date) },
+  ]);
+
+  renderProgressChart(rows, scores);
+  renderDistChart(scores);
+  renderWeakQuestions(rows);
+  renderWordCloud(rows);
+  renderHistory(rows, scores);
+}
+
+function renderProgressChart(rows, scores) {
   if (chartProgress) chartProgress.destroy();
   chartProgress = new Chart(document.getElementById('chartProgress'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        data: scores,
-        borderColor: '#0E1A12',
-        backgroundColor: 'rgba(14,26,18,.07)',
-        borderWidth: 2,
-        pointRadius: 4,
-        pointBackgroundColor: scores.map(s => s>=70?'#1D9E75':s>=50?'#EF9F27':'#D85A30'),
-        tension: .3,
-        fill: true
-      }]
+    type:'line',
+    data:{
+      labels: rows.map(r => fmtDate(r.quiz_date)),
+      datasets:[{ data:scores, borderColor:'#0E1A12', backgroundColor:'rgba(14,26,18,.07)', borderWidth:2, pointRadius:4, pointBackgroundColor:scores.map(s=>s>=70?'#1D9E75':s>=50?'#EF9F27':'#D85A30'), tension:.3, fill:true }]
     },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx => ctx.parsed.y+'%' } } },
-      scales:{
-        y:{ min:0, max:100, ticks:{ callback: v=>v+'%', font:{family:'DM Mono',size:10} }, grid:{color:'rgba(14,26,18,.06)'} },
-        x:{ ticks:{ font:{family:'DM Mono',size:10} }, grid:{display:false} }
-      }
-    }
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.y+'%'}}}, scales:{ y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{family:'DM Mono',size:10}},grid:{color:'rgba(14,26,18,.06)'}}, x:{ticks:{font:{family:'DM Mono',size:10}},grid:{display:false}} } }
   });
 }
 
 function renderDistChart(scores) {
-  const buckets = [0,0,0,0,0];
-  scores.forEach(s => {
-    if      (s < 40) buckets[0]++;
-    else if (s < 55) buckets[1]++;
-    else if (s < 70) buckets[2]++;
-    else if (s < 85) buckets[3]++;
-    else             buckets[4]++;
-  });
   if (chartDist) chartDist.destroy();
+  const b=[0,0,0,0,0];
+  scores.forEach(s=>{ if(s<40)b[0]++;else if(s<55)b[1]++;else if(s<70)b[2]++;else if(s<85)b[3]++;else b[4]++; });
   chartDist = new Chart(document.getElementById('chartDist'), {
-    type: 'bar',
-    data: {
-      labels: ['< 40%','40–55%','55–70%','70–85%','85%+'],
-      datasets:[{ data:buckets, backgroundColor:['#F09595','#FAC775','#FAC775','#97C459','#5DCAA5'], borderRadius:4 }]
-    },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false} },
-      scales:{
-        y:{ ticks:{stepSize:1,font:{family:'DM Mono',size:10}}, grid:{color:'rgba(14,26,18,.06)'} },
-        x:{ ticks:{font:{family:'DM Mono',size:10}}, grid:{display:false} }
-      }
-    }
+    type:'bar',
+    data:{ labels:['< 40%','40–55%','55–70%','70–85%','85%+'], datasets:[{data:b,backgroundColor:['#F09595','#FAC775','#FAC775','#97C459','#5DCAA5'],borderRadius:4}] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ticks:{stepSize:1,font:{family:'DM Mono',size:10}},grid:{color:'rgba(14,26,18,.06)'}}, x:{ticks:{font:{family:'DM Mono',size:10}},grid:{display:false}} } }
   });
 }
 
-function renderSubjectBars(results) {
-  const bySubject = {};
-  results.forEach(r => {
-    if (!bySubject[r.subject]) bySubject[r.subject] = [];
-    bySubject[r.subject].push(Math.round((r.score/r.total)*100));
-  });
-  const el = document.getElementById('subjectBars');
-  el.innerHTML = '';
-  Object.entries(bySubject).forEach(([subj, arr]) => {
-    const avg = Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);
-    const color = avg>=70?'#1D9E75':avg>=50?'#EF9F27':'#D85A30';
-    el.innerHTML += `<div class="bar-row">
-      <span class="bar-label">${subj}</span>
-      <div class="bar-track"><div class="bar-fill" style="width:${avg}%;background:${color}"></div></div>
-      <span class="bar-val" style="color:${color}">${avg}%</span>
-    </div>`;
-  });
-}
-
-function renderWeakQuestions(allAnswers) {
+function renderWeakQuestions(rows) {
+  const all = rows.flatMap(r => r.answers||[]);
   const byQ = {};
-  allAnswers.forEach(a => {
-    const key = a.question_fr || 'Inconnu';
-    if (!byQ[key]) byQ[key] = {total:0, wrong:0};
-    byQ[key].total++;
-    if (!a.is_correct) byQ[key].wrong++;
+  all.forEach(a => {
+    const k = a.question_fr||'?';
+    if (!byQ[k]) byQ[k]={total:0,wrong:0};
+    byQ[k].total++;
+    if (!a.is_correct) byQ[k].wrong++;
   });
-  const sorted = Object.entries(byQ)
-    .map(([q,v]) => ({q, pct:Math.round((v.wrong/v.total)*100), total:v.total}))
-    .filter(x => x.pct > 0)
-    .sort((a,b) => b.pct - a.pct)
-    .slice(0, 7);
-
+  const sorted = Object.entries(byQ).map(([q,v])=>({q,pct:Math.round((v.wrong/v.total)*100)}))
+    .filter(x=>x.pct>0).sort((a,b)=>b.pct-a.pct).slice(0,6);
   const el = document.getElementById('weakQuestions');
   el.innerHTML = '';
+  if (!sorted.length) { el.innerHTML='<p style="font-size:.72rem;color:var(--dk55);font-style:italic">Aucune erreur enregistrée.</p>'; return; }
   sorted.forEach(item => {
-    const short = item.q.length > 45 ? item.q.slice(0,45)+'…' : item.q;
-    const color = item.pct>=70?'#D85A30':item.pct>=40?'#EF9F27':'#1D9E75';
-    el.innerHTML += `<div class="bar-row">
-      <span class="bar-label" title="${item.q}">${short}</span>
-      <div class="bar-track"><div class="bar-fill" style="width:${item.pct}%;background:${color}"></div></div>
-      <span class="bar-val" style="color:${color}">${item.pct}%</span>
-    </div>`;
+    const short = item.q.length>42?item.q.slice(0,42)+'…':item.q;
+    const c = item.pct>=70?'#D85A30':item.pct>=40?'#EF9F27':'#1D9E75';
+    el.innerHTML+=`<div class="bar-row"><span class="bar-label" title="${item.q}">${short}</span><div class="bar-track"><div class="bar-fill" style="width:${item.pct}%;background:${c}"></div></div><span class="bar-val" style="color:${c}">${item.pct}%</span></div>`;
   });
-  if (!sorted.length) el.innerHTML = '<p style="font-size:.72rem;color:var(--dk55);font-style:italic">Aucune erreur enregistrée.</p>';
 }
 
-function renderWordCloud(sorted) {
-  const colors = [
-    {bg:'#FCEBEB',c:'#A32D2D'},{bg:'#FAEEDA',c:'#854F0B'},
-    {bg:'#E6F1FB',c:'#185FA5'},{bg:'#EAF3DE',c:'#3B6D11'},
-    {bg:'#EEEDFE',c:'#534AB7'}
-  ];
+function renderWordCloud(rows) {
+  const all = rows.flatMap(r=>r.answers||[]).filter(a=>!a.is_correct);
+  const concepts = {};
+  all.forEach(a=>{ const k=(a.question_fr||'').split(' ').slice(0,5).join(' ')+'…'; concepts[k]=(concepts[k]||0)+1; });
+  const sorted = Object.entries(concepts).sort((a,b)=>b[1]-a[1]);
+  const colors=[{bg:'#FCEBEB',c:'#A32D2D'},{bg:'#FAEEDA',c:'#854F0B'},{bg:'#E6F1FB',c:'#185FA5'},{bg:'#EAF3DE',c:'#3B6D11'},{bg:'#EEEDFE',c:'#534AB7'}];
   const el = document.getElementById('wordCloud');
-  el.innerHTML = '';
-  if (!sorted.length) { el.innerHTML = '<p style="font-size:.72rem;color:var(--dk55);font-style:italic">Pas encore de données suffisantes.</p>'; return; }
-  const max = sorted[0][1];
-  sorted.slice(0,14).forEach(([word, count], i) => {
-    const size = Math.round(10 + (count/max)*8);
-    const col = colors[i % colors.length];
-    el.innerHTML += `<span class="word-tag" style="font-size:${size}px;background:${col.bg};color:${col.c}">${word}</span>`;
+  el.innerHTML='';
+  if (!sorted.length) { el.innerHTML='<p style="font-size:.72rem;color:var(--dk55);font-style:italic">Pas encore assez de données.</p>'; return; }
+  const max=sorted[0][1];
+  sorted.slice(0,12).forEach(([w,n],i)=>{
+    const sz=Math.round(10+(n/max)*8);
+    const col=colors[i%colors.length];
+    el.innerHTML+=`<span class="word-tag" style="font-size:${sz}px;background:${col.bg};color:${col.c}">${w}</span>`;
   });
 }
 
-function renderHistory(results, scores) {
+function renderHistory(rows, scores) {
   const el = document.getElementById('historyList');
-  el.innerHTML = '';
-  [...results].reverse().forEach((r, i) => {
-    const s = scores[scores.length - 1 - i];
-    const cls = s>=70?'score-good':s>=50?'score-mid':'score-low';
-    const d = new Date(r.quiz_date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
-    el.innerHTML += `<div class="history-row">
-      <span class="history-date">${d}</span>
-      <span class="history-subject">${r.subject}</span>
-      <span class="history-score ${cls}">${r.score}/${r.total} · ${s}%</span>
-    </div>`;
+  el.innerHTML='';
+  [...rows].reverse().forEach((r,i)=>{
+    const s=scores[scores.length-1-i];
+    const cls=s>=70?'score-good':s>=50?'score-mid':'score-low';
+    el.innerHTML+=`<div class="history-row"><span class="history-date">${fmtDate(r.quiz_date)}</span><span class="history-subject">${r.subject||'—'}</span><span class="history-score ${cls}">${r.score}/${r.total} · ${s}%</span></div>`;
   });
 }
 
 window.exportCSV = function() {
-  const name = document.getElementById('nameInput').value.trim();
-  const rows = [['Date','Élève','Sujet','Score','Total','Pourcentage']];
-  allResults.forEach(r => {
-    const d = new Date(r.quiz_date).toLocaleDateString('fr-FR');
-    const pct = Math.round((r.score/r.total)*100);
-    rows.push([d, r.student_name, r.subject, r.score, r.total, pct+'%']);
-  });
-  const csv = rows.map(r=>r.join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = `suivi_${name}_${new Date().toISOString().slice(0,10)}.csv`;
+  const rows=[['Date','Élève','Matière','Sujet','Score','Total','%']];
+  allResults.filter(r=>(r.matiere||'Non spécifié')===currentMatiere&&(r.subject||'Non spécifié')===currentSujet)
+    .forEach(r=>{ rows.push([fmtDate(r.quiz_date),r.student_name,r.matiere||'',r.subject||'',r.score,r.total,pct(r)+'%']); });
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=`suivi_${currentStudent}_${currentSujet}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 };
 
+// ── HELPERS ───────────────────────────────────────────────────
+function pct(r)   { return Math.round((r.score/r.total)*100); }
+function mean(arr){ return arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 0; }
+function esc(s)   { return (s||'').replace(/'/g,"\\'"); }
+function fmtDate(d){ return new Date(d).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}); }
+function groupBy(arr,fn){ const g={}; arr.forEach(r=>{ const k=fn(r)||'Non spécifié'; if(!g[k])g[k]=[]; g[k].push(r); }); return g; }
+
+function trendLabel(scores) {
+  if (scores.length < 2) return 'Premier quiz';
+  const diff = scores[scores.length-1] - scores[0];
+  return (diff>=0?'+':'')+diff+'% depuis le début';
+}
+
+function bestMatiere(matieres) {
+  let best={name:'—',avg:0};
+  Object.entries(matieres).forEach(([m,rows])=>{ const a=mean(rows.map(r=>pct(r))); if(a>best.avg)best={name:m,avg:a}; });
+  return best;
+}
+function worstMatiere(matieres) {
+  let worst={name:'—',avg:100};
+  Object.entries(matieres).forEach(([m,rows])=>{ const a=mean(rows.map(r=>pct(r))); if(a<worst.avg)worst={name:m,avg:a}; });
+  return worst;
+}
+
+function metricCards(items) {
+  return items.map(m=>`<div class="metric"><div class="metric-label">${m.label}</div><div class="metric-val">${m.val}</div><div class="metric-sub">${m.sub||''}</div></div>`).join('');
+}
+
 function setMsg(msg, loading=false) {
-  const el = document.getElementById('stateMsg');
-  el.textContent = msg;
-  el.className = 'state-msg' + (loading?' loading':'');
-  el.style.display = msg ? 'block' : 'none';
+  const el=document.getElementById('stateMsg');
+  el.textContent=msg; el.className='state-msg'+(loading?' loading':'');
+  el.style.display=msg?'block':'none';
 }
 </script>
 </body>
