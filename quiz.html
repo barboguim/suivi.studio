@@ -262,9 +262,9 @@
 <footer>SUIVI.STUDIO · Ton suivi, ta stratégie ! · Quiz generator</footer>
 
 <script>
-const SUPABASE_URL = 'https://ycoqsxxegwfazweebbax.supabase.co';
-const TAVILY_KEY   = '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';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljb3FzeHhlZ3dmYXp3ZWViYmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5ODc2NzksImV4cCI6MjA5MjU2MzY3OX0.DdPAsZcWWZMdWgQesP6G0GooK_ejnsTPp05_lwRMi-8';
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const TAVILY_KEY   = 'YOUR_TAVILY_KEY';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -684,21 +684,21 @@ window.generateFromResource = async function(idx) {
   try {
     let sourceText = '';
 
-    if (isYT) {
-      proc.textContent = 'Récupération de la transcription YouTube…';
-      const ytId = getYTId(url);
-      if (!ytId) throw new Error('ID YouTube introuvable');
-      const transcriptRes = await fetch(`https://yt.lemnoslife.com/videos?part=transcript&id=${ytId}`);
-      if (!transcriptRes.ok) throw new Error('Transcription indisponible pour cette vidéo');
-      const transcriptData = await transcriptRes.json();
-      const items = transcriptData?.items?.[0]?.transcript?.runs || [];
-      sourceText = items.map(it => it.text).join(' ').slice(0, 6000);
-      if (!sourceText || sourceText.length < 100) throw new Error('Transcription trop courte ou indisponible');
-    } else if (isPDF) {
-      proc.textContent = 'Pour les PDFs, utilise le bouton "Visiter" puis dépose le PDF dans le générateur.';
-      btn.disabled = false;
-      btn.textContent = '⚡ Générer un quiz';
-      return;
+    if (isYT || isPDF) {
+      proc.textContent = isYT ? 'Extraction du contenu YouTube…' : 'Extraction du contenu PDF…';
+      const key = TAVILY_KEY !== 'YOUR_TAVILY_KEY' ? TAVILY_KEY : prompt('Entre ta clé Tavily (tvly-…) :');
+      if (!key || !key.startsWith('tvly-')) throw new Error('Clé Tavily invalide');
+      const extractRes = await fetch('https://api.tavily.com/extract', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ api_key:key, urls:[url] })
+      });
+      if (!extractRes.ok) {
+        const e = await extractRes.json().catch(()=>({}));
+        throw new Error(e.message || 'Extraction échouée (HTTP ' + extractRes.status + ')');
+      }
+      const extractData = await extractRes.json();
+      sourceText = (extractData.results?.[0]?.raw_content || '').slice(0, 6000);
+      if (!sourceText || sourceText.length < 80) throw new Error('Contenu insuffisant — essaie "Visiter" et dépose le fichier manuellement.');
     } else {
       // Use Tavily raw_content if available, else fetch via Tavily extract
       proc.textContent = 'Extraction du contenu de la page…';
