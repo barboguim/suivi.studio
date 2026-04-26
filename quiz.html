@@ -262,9 +262,9 @@
 <footer>SUIVI.STUDIO · Ton suivi, ta stratégie ! · Quiz generator</footer>
 
 <script>
-const SUPABASE_URL = 'https://ycoqsxxegwfazweebbax.supabase.co';
-const TAVILY_KEY   = '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';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljb3FzeHhlZ3dmYXp3ZWViYmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5ODc2NzksImV4cCI6MjA5MjU2MzY3OX0.DdPAsZcWWZMdWgQesP6G0GooK_ejnsTPp05_lwRMi-8';
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const TAVILY_KEY   = 'YOUR_TAVILY_KEY';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -723,7 +723,7 @@ window.generateFromResource = async function(idx) {
     // Sanitize
     sourceText = sourceText.replace(/`/g, "'").trim();
 
-    const prompt = `Tu es SUIVI.STUDIO, un assistant pédagogique expert.
+    const groqPrompt = `Tu es SUIVI.STUDIO, un assistant pédagogique expert.
 Voici le contenu extrait de la ressource : "${title}"
 ---
 ${sourceText}
@@ -740,7 +740,7 @@ Réponds UNIQUEMENT en JSON valide sans backticks :
       body: JSON.stringify({ model:'llama-3.3-70b-versatile', temperature:0.3, max_tokens:4000,
         messages:[
           {role:'system', content:'Tu réponds UNIQUEMENT en JSON valide, sans backticks ni markdown.'},
-          {role:'user', content:prompt}
+          {role:'user', content:groqPrompt}
         ]
       })
     });
