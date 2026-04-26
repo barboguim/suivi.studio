@@ -182,7 +182,7 @@
       </div>
       <div class="card">
         <div class="card-title">Notions à retravailler</div>
-        <div class="word-cloud" id="wordCloud"></div>
+        <div id="wordCloudContainer"><div class="word-cloud" id="wordCloud"></div></div>
       </div>
     </div>
     <div class="card full">
@@ -198,8 +198,9 @@
 <footer>SUIVI.STUDIO · Ton suivi, ta stratégie ! · Quiz generator</footer>
 
 <script>
-const SUPABASE_URL = 'https://ycoqsxxegwfazweebbax.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljb3FzeHhlZ3dmYXp3ZWViYmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5ODc2NzksImV4cCI6MjA5MjU2MzY3OX0.DdPAsZcWWZMdWgQesP6G0GooK_ejnsTPp05_lwRMi-8';
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const TAVILY_KEY   = 'YOUR_TAVILY_KEY';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
 let allResults = [];
 let currentStudent = '';
@@ -466,6 +467,7 @@ function renderWordCloud(rows) {
   });
   const sorted = Object.entries(concepts).sort((a,b)=>b[1]-a[1]);
   const colors=[{bg:'#FCEBEB',c:'#A32D2D'},{bg:'#FAEEDA',c:'#854F0B'},{bg:'#E6F1FB',c:'#185FA5'},{bg:'#EAF3DE',c:'#3B6D11'},{bg:'#EEEDFE',c:'#534AB7'}];
+  const container = document.getElementById('wordCloudContainer');
   const el = document.getElementById('wordCloud');
   el.innerHTML='';
   if (!sorted.length) { el.innerHTML='<p style="font-size:.72rem;color:var(--dk55);font-style:italic">Pas encore assez de données.</p>'; return; }
@@ -473,9 +475,64 @@ function renderWordCloud(rows) {
   sorted.slice(0,14).forEach(([w,n],i)=>{
     const sz=Math.round(10+(n/max)*9);
     const col=colors[i%colors.length];
-    el.innerHTML+=`<span class="word-tag" style="font-size:${sz}px;background:${col.bg};color:${col.c};cursor:default" title="${n} erreur(s)">${w}</span>`;
+    const safeW = w.replace(/'/g,"&apos;").replace(/"/g,'&quot;');
+    el.innerHTML+=`<span class="word-tag" style="font-size:${sz}px;background:${col.bg};color:${col.c};cursor:pointer;border:1px solid transparent;transition:border .15s" title="Cliquer pour trouver des ressources" onclick="searchConcept('${safeW}',this)">${w} <span style="font-size:.6em;opacity:.6">↗</span></span>`;
   });
 }
+
+window.searchConcept = async function(concept, tagEl) {
+  // Find or create resource panel below word cloud
+  let panel = document.getElementById('conceptResourcePanel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'conceptResourcePanel';
+    panel.style.cssText = 'margin-top:1rem;padding:.85rem 1rem;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);border-radius:8px';
+    document.getElementById('wordCloud').parentElement.appendChild(panel);
+  }
+
+  // Highlight selected tag
+  document.querySelectorAll('.word-tag').forEach(t => t.style.border='1px solid transparent');
+  tagEl.style.border = '1px solid rgba(14,26,18,.4)';
+
+  panel.innerHTML = `<div style="font-size:.65rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--dk55);margin-bottom:.5rem">Ressources · ${concept}</div><p style="font-size:.72rem;color:var(--dk55);font-style:italic">Recherche en cours…</p>`;
+
+  try {
+    const key = (typeof TAVILY_KEY !== 'undefined' && TAVILY_KEY !== 'YOUR_TAVILY_KEY')
+      ? TAVILY_KEY : prompt('Entre ta clé Tavily (tvly-…) pour la recherche :');
+    if (!key || !key.startsWith('tvly-')) throw new Error('Clé Tavily invalide');
+
+    const q = `${concept} ${currentMatiere||''} cours explication ressource pédagogique`;
+    const res = await fetch('https://api.tavily.com/search', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ api_key:key, query:q, search_depth:'basic', max_results:5, include_answer:true })
+    });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    const results = data.results||[];
+
+    let html = `<div style="font-size:.65rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--dk55);margin-bottom:.5rem">Ressources · ${concept}</div>`;
+    if (data.answer) html += `<p style="font-size:.7rem;font-style:italic;color:var(--dk55);line-height:1.6;margin-bottom:.6rem;padding:.5rem .75rem;background:rgba(255,255,255,.2);border-radius:5px">${data.answer.slice(0,250)}…</p>`;
+    if (!results.length) { html += '<p style="font-size:.7rem;color:var(--dk55)">Aucune ressource trouvée.</p>'; }
+    results.slice(0,4).forEach(r => {
+      const url = r.url||'';
+      const isPDF = url.toLowerCase().endsWith('.pdf');
+      const domain = (() => { try { return new URL(url).hostname.replace('www.',''); } catch(e) { return url; } })();
+      const typeLabel = isPDF?'PDF':url.includes('khanacademy')?'Khan Academy':url.includes('youtube')||url.includes('lumni')?'Vidéo':'Article';
+      const typeBg   = isPDF?'#FCEBEB':url.includes('khanacademy')?'#EAF3DE':url.includes('youtube')?'#E6F1FB':'rgba(14,26,18,.08)';
+      html += `<div style="padding:.45rem 0;border-bottom:1px solid var(--dk12)">
+        <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.15rem">
+          <span style="padding:1px 7px;border-radius:10px;font-size:.58rem;background:${typeBg}">${typeLabel}</span>
+          <span style="font-size:.65rem;color:var(--dk55)">${domain}</span>
+        </div>
+        <div style="font-size:.72rem;font-weight:500;line-height:1.3;margin-bottom:.2rem">${r.title||'Ressource'}</div>
+        <a href="${url}" target="_blank" rel="noopener" style="font-size:.65rem;color:var(--dk);border-bottom:1px solid var(--dk38)">Accéder →</a>
+      </div>`;
+    });
+    panel.innerHTML = html;
+  } catch(e) {
+    panel.innerHTML = `<div style="font-size:.65rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--dk55);margin-bottom:.5rem">Ressources · ${concept}</div><p style="font-size:.72rem;color:#8B1A10">Erreur : ${e.message}</p>`;
+  }
+};
 
 function renderHistory(rows, scores) {
   const el = document.getElementById('historyList');

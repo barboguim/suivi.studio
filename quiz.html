@@ -244,8 +244,9 @@
 <footer>SUIVI.STUDIO · Ton suivi, ta stratégie ! · Quiz generator</footer>
 
 <script>
-const SUPABASE_URL = 'https://ycoqsxxegwfazweebbax.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljb3FzeHhlZ3dmYXp3ZWViYmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5ODc2NzksImV4cCI6MjA5MjU2MzY3OX0.DdPAsZcWWZMdWgQesP6G0GooK_ejnsTPp05_lwRMi-8';
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const TAVILY_KEY   = 'YOUR_TAVILY_KEY';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -510,125 +511,111 @@ function setSearchStep(n) {
   }
 }
 
+async function tavilySearch(query, opts={}) {
+  const key = (typeof TAVILY_KEY !== 'undefined' && TAVILY_KEY !== 'YOUR_TAVILY_KEY')
+    ? TAVILY_KEY : prompt('Entre ta clé Tavily (tvly-…) :');
+  if (!key || !key.startsWith('tvly-')) throw new Error('Clé Tavily invalide — elle doit commencer par tvly-');
+  const res = await fetch('https://api.tavily.com/search', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      api_key: key,
+      query: query,
+      search_depth: opts.depth||'advanced',
+      max_results: opts.max||8,
+      include_answer: true,
+      include_raw_content: false
+    })
+  });
+  if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.message||'HTTP '+res.status); }
+  return res.json();
+}
+
 window.runSearch = async function() {
   const query = document.getElementById('searchQuery').value.trim();
   const level = document.getElementById('searchLevel').value;
-  const apiKey = document.getElementById('groqKey')?.value?.trim() ||
-                 prompt('Entre ta clé Groq (gsk_…) pour la recherche :');
-  if (!apiKey || !apiKey.startsWith('gsk_')) {
-    const el = document.getElementById('searchError');
-    el.textContent = 'Clé Groq requise pour la recherche.';
-    el.classList.add('show');
-    return;
-  }
+  if (!query) return;
   document.getElementById('searchError').classList.remove('show');
   document.getElementById('searchResults').innerHTML = '';
   document.getElementById('searchBtn').disabled = true;
   document.getElementById('searchProgress').classList.add('show');
   setSearchStep(1);
-
   try {
-    await new Promise(r => setTimeout(r, 400));
+    await new Promise(r => setTimeout(r, 200));
     setSearchStep(2);
-
-    const searchLinks = [
-      { name:'Google Scholar', base:'https://scholar.google.com/scholar?q=', lang:'FR/EN' },
-      { name:'Éduscol', base:'https://eduscol.education.fr/recherche?query=', lang:'FR' },
-      { name:'Khan Academy FR', base:'https://fr.khanacademy.org/search?page_search_query=', lang:'FR' },
-      { name:'OpenStax', base:'https://openstax.org/search?q=', lang:'EN' },
-      { name:'Gallica BnF', base:'https://gallica.bnf.fr/Search?q=', lang:'FR' },
-    ];
-
-    const prompt = `Tu es un assistant pédagogique expert. Un élève de niveau ${level} cherche des ressources sur : "${query}".
-
-Pour chaque source listée ci-dessous, génère une ressource pertinente avec un titre réel et une description utile.
-Sources disponibles : ${searchLinks.map(s => s.name).join(', ')}.
-
-IMPORTANT : N'invente PAS d'URLs. Laisse le champ url vide (""). Le système générera les liens automatiquement.
-
-Réponds UNIQUEMENT en JSON valide sans backticks :
-{
-  "resources": [
-    {
-      "title": "Titre descriptif de la ressource",
-      "source": "Nom exact de la source (ex: Khan Academy FR)",
-      "description": "Description utile en 1-2 phrases de ce qu'on y trouve sur ce sujet.",
-      "type": "Cours" | "Vidéo" | "Manuel" | "Article" | "Base de données",
-      "language": "FR" | "EN" | "FR/EN"
-    }
-  ]
-}`;
-
-    await new Promise(r => setTimeout(r, 500));
+    const q = `${query} cours ${level} ressource pédagogique`;
+    const data = await tavilySearch(q, {depth:'advanced', max:8});
     setSearchStep(3);
-
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + apiKey },
-      body: JSON.stringify({
-        model:'llama-3.3-70b-versatile', temperature:0.2, max_tokens:2000,
-        messages:[
-          { role:'system', content:'Tu réponds UNIQUEMENT en JSON valide, sans backticks ni markdown.' },
-          { role:'user', content:prompt }
-        ]
-      })
-    });
-
-    if (!response.ok) throw new Error('Erreur API');
-    const data = await response.json();
-    const raw  = data.choices[0].message.content.trim();
-    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
-
+    await new Promise(r => setTimeout(r, 150));
     document.getElementById('searchProgress').classList.remove('show');
     document.getElementById('searchBtn').disabled = false;
-    renderSearchResults(parsed.resources, query);
-
+    renderSearchResults(data.results||[], query, data.answer);
   } catch(e) {
     document.getElementById('searchProgress').classList.remove('show');
     document.getElementById('searchBtn').disabled = false;
     const el = document.getElementById('searchError');
-    el.textContent = 'Erreur : ' + e.message;
-    el.classList.add('show');
+    el.textContent = 'Erreur : ' + e.message; el.classList.add('show');
   }
 };
 
-const SOURCE_URLS = {
-  'Google Scholar':   q => `https://scholar.google.com/scholar?q=${encodeURIComponent(q)}`,
-  'Éduscol':          q => `https://eduscol.education.fr/recherche?query=${encodeURIComponent(q)}`,
-  'Khan Academy FR':  q => `https://fr.khanacademy.org/search?page_search_query=${encodeURIComponent(q)}`,
-  'OpenStax':         q => `https://openstax.org/search?q=${encodeURIComponent(q)}`,
-  'Gallica BnF':      q => `https://gallica.bnf.fr/Search?q=${encodeURIComponent(q)}`,
+// Exposed for dashboard concept search
+window.tavilyConceptSearch = async function(concept, matiere, containerEl) {
+  containerEl.innerHTML = '<p style="font-size:.72rem;color:var(--dk55);font-style:italic;padding:.5rem 0">Recherche en cours…</p>';
+  try {
+    const q = `${concept} ${matiere||''} cours explication ressource pédagogique`;
+    const data = await tavilySearch(q, {depth:'basic', max:5});
+    renderConceptResources(data.results||[], concept, containerEl, data.answer);
+  } catch(e) {
+    containerEl.innerHTML = `<p style="font-size:.72rem;color:#8B1A10;padding:.5rem 0">Erreur : ${e.message}</p>`;
+  }
 };
 
-function buildUrl(source, query) {
-  for (const [key, fn] of Object.entries(SOURCE_URLS)) {
-    if (source && source.toLowerCase().includes(key.toLowerCase())) return fn(query);
-  }
-  // fallback: Google Scholar search
-  return `https://scholar.google.com/scholar?q=${encodeURIComponent(source + ' ' + query)}`;
+function getResultType(r) {
+  const url = (r.url||'').toLowerCase();
+  if (url.endsWith('.pdf')||url.includes('/pdf/')) return {label:'PDF',color:'#FCEBEB'};
+  if (url.includes('youtube')||url.includes('youtu.be')||url.includes('lumni')) return {label:'Vidéo',color:'#E6F1FB'};
+  if (url.includes('khanacademy')) return {label:'Khan Academy',color:'#EAF3DE'};
+  if (url.includes('openstax')||url.includes('libretexts')) return {label:'Manuel',color:'#EAF3DE'};
+  if (url.includes('eduscol')||url.includes('education.fr')) return {label:'Officiel FR',color:'#EEEDFE'};
+  return {label:'Article',color:'rgba(14,26,18,.08)'};
 }
+function getDomain(url) { try { return new URL(url).hostname.replace('www.',''); } catch(e) { return url; } }
 
-function renderSearchResults(resources, query) {
+function renderSearchResults(results, query, answer) {
   const el = document.getElementById('searchResults');
-  if (!resources || !resources.length) {
-    el.innerHTML = '<p style="font-size:.78rem;color:var(--dk55);font-style:italic">Aucune ressource trouvée.</p>';
-    return;
-  }
-  el.innerHTML = `<div style="font-size:.68rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--dk55);margin-bottom:.75rem">${resources.length} ressources · ${query}</div>`;
-  resources.forEach(r => {
-    const typeColor = r.type==='Vidéo'?'#E6F1FB':r.type==='Manuel'?'#EAF3DE':r.type==='Base de données'?'#EEEDFE':'rgba(14,26,18,.08)';
-    const url = buildUrl(r.source, query);
-    el.innerHTML += `<div class="result-card">
-      <div style="margin-bottom:.4rem">
-        <span class="result-tag" style="background:${typeColor}">${r.type||'Cours'}</span>
-        <span class="result-tag">${r.language||'FR'}</span>
-        <span class="result-tag">${r.source}</span>
-      </div>
-      <div class="result-title">${r.title}</div>
-      <div class="result-desc">${r.description}</div>
-      <a class="result-link" href="${url}" target="_blank" rel="noopener">Rechercher sur ${r.source} →</a>
+  if (!results.length) { el.innerHTML='<p style="font-size:.78rem;color:var(--dk55);font-style:italic">Aucune ressource trouvée.</p>'; return; }
+  let html = '';
+  if (answer) html += `<div style="background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:.85rem 1rem;margin-bottom:1rem;font-size:.75rem;line-height:1.7;font-style:italic">${answer}</div>`;
+  html += `<div style="font-size:.68rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--dk55);margin-bottom:.75rem">${results.length} ressources · ${query}</div>`;
+  results.forEach(r => {
+    const t = getResultType(r);
+    const desc = (r.content||'').slice(0,160).trim();
+    html += `<div class="result-card">
+      <div style="margin-bottom:.4rem"><span class="result-tag" style="background:${t.color}">${t.label}</span><span class="result-tag">${getDomain(r.url)}</span></div>
+      <div class="result-title">${r.title||'Ressource'}</div>
+      ${desc?`<div class="result-desc">${desc}…</div>`:''}
+      <a class="result-link" href="${r.url}" target="_blank" rel="noopener">Accéder →</a>
     </div>`;
   });
+  el.innerHTML = html;
+}
+
+function renderConceptResources(results, concept, el, answer) {
+  if (!results.length) { el.innerHTML='<p style="font-size:.7rem;color:var(--dk55);font-style:italic;padding:.4rem 0">Aucune ressource trouvée.</p>'; return; }
+  let html = '';
+  if (answer) html += `<p style="font-size:.7rem;font-style:italic;color:var(--dk55);line-height:1.6;margin-bottom:.5rem">${answer.slice(0,200)}…</p>`;
+  results.slice(0,4).forEach(r => {
+    const t = getResultType(r);
+    html += `<div style="padding:.4rem 0;border-bottom:1px solid var(--dk12);font-size:.7rem">
+      <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.15rem">
+        <span style="padding:1px 6px;border-radius:10px;font-size:.58rem;background:${t.color}">${t.label}</span>
+        <span style="color:var(--dk55)">${getDomain(r.url)}</span>
+      </div>
+      <div style="font-weight:500;margin-bottom:.1rem;line-height:1.3">${r.title||'Ressource'}</div>
+      <a href="${r.url}" target="_blank" rel="noopener" style="color:var(--dk);font-size:.65rem;border-bottom:1px solid var(--dk38)">Accéder →</a>
+    </div>`;
+  });
+  el.innerHTML = html;
 }
 
 function showGenError(msg) { const el = document.getElementById('genError'); el.textContent = msg; el.classList.add('show'); }
