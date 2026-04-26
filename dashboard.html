@@ -198,9 +198,9 @@
 <footer>SUIVI.STUDIO · Ton suivi, ta stratégie ! · Quiz generator</footer>
 
 <script>
-const SUPABASE_URL = 'https://ycoqsxxegwfazweebbax.supabase.co';
-const TAVILY_KEY   = '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';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljb3FzeHhlZ3dmYXp3ZWViYmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5ODc2NzksImV4cCI6MjA5MjU2MzY3OX0.DdPAsZcWWZMdWgQesP6G0GooK_ejnsTPp05_lwRMi-8';
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const TAVILY_KEY   = 'YOUR_TAVILY_KEY';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
 let allResults = [];
 let currentStudent = '';
@@ -481,13 +481,13 @@ function renderWordCloud(rows) {
 }
 
 window.searchConcept = async function(concept, tagEl) {
-  // Find or create resource panel below word cloud
+  const container = document.getElementById('wordCloudContainer');
   let panel = document.getElementById('conceptResourcePanel');
   if (!panel) {
     panel = document.createElement('div');
     panel.id = 'conceptResourcePanel';
     panel.style.cssText = 'margin-top:1rem;padding:.85rem 1rem;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);border-radius:8px';
-    document.getElementById('wordCloud').parentElement.appendChild(panel);
+    container.appendChild(panel);
   }
 
   // Highlight selected tag
@@ -498,8 +498,8 @@ window.searchConcept = async function(concept, tagEl) {
 
   try {
     const key = (typeof TAVILY_KEY !== 'undefined' && TAVILY_KEY !== 'YOUR_TAVILY_KEY')
-      ? TAVILY_KEY : prompt('Entre ta clé Tavily (tvly-…) pour la recherche :');
-    if (!key || !key.startsWith('tvly-')) throw new Error('Clé Tavily invalide');
+      ? TAVILY_KEY : prompt('Entre ta clé Tavily (tvly-…) :');
+    if (!key || !key.startsWith('tvly-')) throw new Error('Clé Tavily invalide — doit commencer par tvly-');
 
     const q = `${concept} ${currentMatiere||''} cours explication ressource pédagogique`;
     const res = await fetch('https://api.tavily.com/search', {
