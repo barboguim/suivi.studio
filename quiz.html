@@ -230,6 +230,25 @@
         <option value="lycée" selected>Lycée</option>
         <option value="université">Université</option>
       </select>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.2rem">
+        <div>
+          <label class="field-label" style="margin-bottom:.4rem">Nombre de questions</label>
+          <select id="searchNumQuestions" style="background:rgba(255,255,255,.2);border:1px solid var(--dk12);border-radius:5px;padding:.55rem .75rem;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--dk);appearance:none;cursor:pointer;outline:none;width:100%">
+            <option value="5">5 questions</option>
+            <option value="8" selected>8 questions</option>
+            <option value="10">10 questions</option>
+            <option value="15">15 questions</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" style="margin-bottom:.4rem">Difficulté</label>
+          <select id="searchDifficulty" style="background:rgba(255,255,255,.2);border:1px solid var(--dk12);border-radius:5px;padding:.55rem .75rem;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--dk);appearance:none;cursor:pointer;outline:none;width:100%">
+            <option value="collège">Collège</option>
+            <option value="lycée" selected>Lycée</option>
+            <option value="avancé">Avancé</option>
+          </select>
+        </div>
+      </div>
       <label class="field-label" style="margin-top:.5rem">Groq API Key</label>
       <input type="password" id="groqKeySearch" placeholder="gsk_..." style="background:rgba(255,255,255,.2);border:1px solid var(--dk12);border-radius:5px;padding:.55rem .75rem;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--dk);outline:none;width:100%;margin-bottom:1.2rem" oninput="syncGroqKey(this.value)">
       <div class="error-msg" id="searchError"></div>
@@ -243,7 +262,16 @@
       </div>
     </div>
     <div id="searchResults" style="margin-top:1.5rem"></div>
-    <div style="margin-top:1.5rem">
+    <!-- Manual YouTube transcription -->
+    <div id="ytManualSection" style="margin-top:1.5rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:1.2rem">
+      <div style="font-size:.65rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--dk55);margin-bottom:.75rem">▶ Transcrire une vidéo YouTube directement</div>
+      <div style="display:flex;gap:.6rem;align-items:center">
+        <input class="field-input" id="ytUrlInput" type="text" placeholder="https://www.youtube.com/watch?v=..." style="margin-bottom:0;flex:1">
+        <button class="btn-action" style="white-space:nowrap;flex-shrink:0" onclick="generateFromYTUrl()">⚡ Générer →</button>
+      </div>
+      <div class="resource-processing" id="ytManualProc" style="margin-top:.5rem"></div>
+    </div>
+    <div style="margin-top:1rem">
       <button class="btn-action" onclick="showScreen('screenIdentity')">← Retour</button>
     </div>
   </div>
@@ -262,9 +290,10 @@
 <footer>SUIVI.STUDIO · Ton suivi, ta stratégie ! · Quiz generator</footer>
 
 <script>
-const SUPABASE_URL = 'https://ycoqsxxegwfazweebbax.supabase.co';
-const TAVILY_KEY   = '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';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljb3FzeHhlZ3dmYXp3ZWViYmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5ODc2NzksImV4cCI6MjA5MjU2MzY3OX0.DdPAsZcWWZMdWgQesP6G0GooK_ejnsTPp05_lwRMi-8';
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const TAVILY_KEY   = 'YOUR_TAVILY_KEY';
+const BACKEND_URL  = 'YOUR_BACKEND_URL'; // e.g. https://suivi-backend.railway.app
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -362,8 +391,11 @@ window.generate = async function() {
   btn.disabled = true;
   document.getElementById('progress').classList.add('show');
   setStep(1);
-  const n    = document.getElementById('numQuestions').value;
-  const diff = document.getElementById('difficulty').value;
+  // Use search screen selectors if available and populated, else fall back to generator screen
+  const searchN    = document.getElementById('searchNumQuestions');
+  const searchDiff = document.getElementById('searchDifficulty');
+  const n    = (searchN    && searchN.value)    ? searchN.value    : document.getElementById('numQuestions').value;
+  const diff = (searchDiff && searchDiff.value) ? searchDiff.value : document.getElementById('difficulty').value;
   try {
     const rawText = await extractTextFromPDF(pdfFile);
     if (!rawText || rawText.length < 50)
@@ -654,6 +686,93 @@ function renderSearchResults(results, query, answer) {
   });
 }
 
+
+// ── YouTube Transcription ────────────────────────────────────
+async function fetchYouTubeCaptions(url, procEl) {
+  const ytId = getYTId(url);
+  if (!ytId) throw new Error('ID YouTube introuvable dans cette URL');
+
+  // Strategy 1: Whisper via backend (best quality)
+  if (BACKEND_URL && BACKEND_URL !== 'YOUR_BACKEND_URL') {
+    try {
+      procEl.textContent = 'Transcription Whisper en cours… (peut prendre 30-60s)';
+      const groqKey = (document.getElementById('groqKey').value ||
+                       document.getElementById('groqKeySearch')?.value || '').trim();
+      const res = await fetch(BACKEND_URL + '/transcribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ youtube_url: url, groq_key: groqKey })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.transcript && data.transcript.length > 50) {
+          procEl.textContent = 'Transcription Whisper réussie ✓';
+          return data.transcript.slice(0, 6000);
+        }
+      }
+      const err = await res.json().catch(() => ({}));
+      procEl.textContent = 'Whisper indisponible, tentative sous-titres…';
+    } catch(e) {
+      procEl.textContent = 'Backend injoignable, tentative sous-titres…';
+    }
+  }
+
+  // Strategy 2: YouTube auto-captions via corsproxy.io
+  try {
+    procEl.textContent = 'Récupération des sous-titres YouTube…';
+    const pageRes = await fetch(`https://corsproxy.io/?url=${encodeURIComponent('https://www.youtube.com/watch?v=' + ytId)}`);
+    if (pageRes.ok) {
+      const pageHtml = await pageRes.text();
+
+      // Try captionTracks from page source
+      const captionMatch = pageHtml.match(/"captionTracks":\[.*?"baseUrl":"([^"]+)"/);
+      if (captionMatch) {
+        const captionUrl = captionMatch[1].replace(/\u0026/g,'&');
+        const capRes = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(captionUrl)}`);
+        if (capRes.ok) {
+          const xml = await capRes.text();
+          const texts = [...xml.matchAll(/<text[^>]*>([^<]*)<\/text>/g)]
+            .map(m => m[1].replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim())
+            .filter(Boolean);
+          if (texts.length > 10) return texts.join(' ').slice(0, 6000);
+        }
+      }
+
+      // Try ytInitialPlayerResponse
+      const playerMatch = pageHtml.match(/ytInitialPlayerResponse\s*=\s*(\{.+?\});/);
+      if (playerMatch) {
+        try {
+          const playerData = JSON.parse(playerMatch[1]);
+          const tracks = playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
+          const frTrack = tracks.find(t => t.languageCode === 'fr') || tracks[0];
+          if (frTrack?.baseUrl) {
+            const capRes = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(frTrack.baseUrl)}`);
+            if (capRes.ok) {
+              const xml = await capRes.text();
+              const texts = [...xml.matchAll(/<text[^>]*>([^<]*)<\/text>/g)]
+                .map(m => m[1].replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim())
+                .filter(Boolean);
+              if (texts.length > 10) return texts.join(' ').slice(0, 6000);
+            }
+          }
+        } catch(e) { /* continue */ }
+      }
+
+      // Description fallback
+      const descMatch = pageHtml.match(/"shortDescription":"((?:[^"\\]|\\.)*)"/);
+      if (descMatch) {
+        const desc = descMatch[1].replace(/\n/g,' ').replace(/\"/g,'"').trim();
+        if (desc.length > 200) {
+          procEl.textContent = 'Sous-titres indisponibles — utilisation de la description…';
+          return desc.slice(0, 3000);
+        }
+      }
+    }
+  } catch(e) { /* fall through */ }
+
+  throw new Error('Transcription indisponible. Configure le backend pour Whisper, ou utilise "Visiter" pour regarder la vidéo directement.');
+}
+
 window.generateFromResource = async function(idx) {
   const r       = _searchResults[idx];
   if (!r) return;
@@ -678,14 +797,20 @@ window.generateFromResource = async function(idx) {
   btn.disabled = true;
   btn.textContent = '⏳ Traitement…';
 
-  const n    = document.getElementById('numQuestions').value;
-  const diff = document.getElementById('difficulty').value;
+  // Use search screen selectors if available and populated, else fall back to generator screen
+  const searchN    = document.getElementById('searchNumQuestions');
+  const searchDiff = document.getElementById('searchDifficulty');
+  const n    = (searchN    && searchN.value)    ? searchN.value    : document.getElementById('numQuestions').value;
+  const diff = (searchDiff && searchDiff.value) ? searchDiff.value : document.getElementById('difficulty').value;
 
   try {
     let sourceText = '';
 
-    if (isYT || isPDF) {
-      proc.textContent = isYT ? 'Extraction du contenu YouTube…' : 'Extraction du contenu PDF…';
+    if (isYT) {
+      proc.textContent = 'Récupération des sous-titres YouTube…';
+      sourceText = await fetchYouTubeCaptions(url, proc);
+    } else if (isPDF) {
+      proc.textContent = 'Extraction du contenu PDF…';
       const key = TAVILY_KEY !== 'YOUR_TAVILY_KEY' ? TAVILY_KEY : prompt('Entre ta clé Tavily (tvly-…) :');
       if (!key || !key.startsWith('tvly-')) throw new Error('Clé Tavily invalide');
       const extractRes = await fetch('https://api.tavily.com/extract', {
@@ -694,7 +819,7 @@ window.generateFromResource = async function(idx) {
       });
       if (!extractRes.ok) {
         const e = await extractRes.json().catch(()=>({}));
-        throw new Error(e.message || 'Extraction échouée (HTTP ' + extractRes.status + ')');
+        throw new Error(e.message || 'Extraction PDF échouée (HTTP ' + extractRes.status + ')');
       }
       const extractData = await extractRes.json();
       sourceText = (extractData.results?.[0]?.raw_content || '').slice(0, 6000);
@@ -760,6 +885,57 @@ Réponds UNIQUEMENT en JSON valide sans backticks :
     proc.textContent = '⚠ ' + e.message;
     btn.disabled = false;
     btn.textContent = '⚡ Réessayer';
+  }
+};
+
+
+window.generateFromYTUrl = async function() {
+  const url = document.getElementById('ytUrlInput').value.trim();
+  const proc = document.getElementById('ytManualProc');
+  if (!url || (!url.includes('youtube.com') && !url.includes('youtu.be'))) {
+    proc.textContent = '⚠ Entre une URL YouTube valide.';
+    return;
+  }
+  const apiKey = (document.getElementById('groqKey').value || document.getElementById('groqKeySearch').value || '').trim();
+  if (!apiKey || !apiKey.startsWith('gsk_')) {
+    proc.textContent = '⚠ Entre ta clé Groq ci-dessus.';
+    return;
+  }
+  const n    = document.getElementById('searchNumQuestions')?.value || document.getElementById('numQuestions').value;
+  const diff = document.getElementById('searchDifficulty')?.value || document.getElementById('difficulty').value;
+
+  proc.textContent = 'Récupération des sous-titres…';
+  try {
+    let sourceText = await fetchYouTubeCaptions(url, proc);
+    sourceText = sourceText.replace(/`/g,"'").trim();
+    proc.textContent = 'Génération du quiz…';
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+      body: JSON.stringify({ model:'llama-3.3-70b-versatile', temperature:0.3, max_tokens:4000,
+        messages:[
+          {role:'system', content:'Tu réponds UNIQUEMENT en JSON valide, sans backticks ni markdown.'},
+          {role:'user', content:`Tu es SUIVI.STUDIO. Voici la transcription d'une vidéo éducative YouTube :
+---
+${sourceText}
+---
+Génère exactement ${n} questions à choix multiples. Niveau : ${diff}.
+Règles : questions tirées du contenu, 4 options (A-D), une seule bonne réponse, tout en français, explication courte.
+Réponds UNIQUEMENT en JSON valide sans backticks :
+{"matiere":"matière détectée","subject":"sujet précis","questions":[{"fr":"Question?","concept":"Concept court","options":[{"letter":"A","fr":"Option A"},{"letter":"B","fr":"Option B"},{"letter":"C","fr":"Option C"},{"letter":"D","fr":"Option D"}],"answer":"A","explanation_fr":"Explication."}]}`
+          }
+        ]
+      })
+    });
+    if (!response.ok) { const e = await response.json(); throw new Error(e.error?.message||'Erreur Groq'); }
+    const data = await response.json();
+    quizData = JSON.parse(data.choices[0].message.content.trim().replace(/\`\`\`json|\`\`\`/g,'').trim());
+    proc.textContent = '';
+    renderQuiz();
+    showScreen('screenQuiz');
+  } catch(e) {
+    proc.textContent = '⚠ ' + e.message;
   }
 };
 
